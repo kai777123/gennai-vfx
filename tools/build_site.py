@@ -84,6 +84,10 @@ def load():
             if not p["godot_min"]:
                 missing.append(f"{k}: Godot minimum not found in README")
         packs.append(p)
+    # Sales order (best sellers first), then the rest in catalog order.
+    order = ["set_a_1004", "volt", "ice", "weather", "set_b_1004", "gun",
+             "earth", "ambient", "px_explosion", "fx2"]
+    packs.sort(key=lambda q: order.index(q["key"]) if q["key"] in order else len(order))
     return cat, packs
 
 
