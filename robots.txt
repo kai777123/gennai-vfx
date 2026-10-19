@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kai777123.github.io/gennai-vfx/sitemap.xml
