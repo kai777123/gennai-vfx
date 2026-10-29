@@ -17,6 +17,9 @@ SHOP = "https://gennai.itch.io"
 BLUESKY = "https://bsky.app/profile/gennaivfx.bsky.social"
 UTM = "?utm_source=github_pages&utm_medium=catalog"
 H1 = "Godot 4 VFX Packs by gennai"
+# Guide pages (file, title, one line). Added by hand when a page is written.
+GUIDES = [("fire-effect-godot-4.html", "How to make a fire effect in Godot 4",
+           "A campfire in about 60 lines of GDScript, variations, where particles stop being enough, and the pack.")]
 # itch public titles that differ from the catalog name (catalog starts with a coined word)
 TITLE_OVERRIDE = {"fx2": "Pixel Art Laser Beam & Lightning VFX (ARCBIT)"}
 # sprite packs without a pack.json: README that states Godot / Unity support
@@ -182,6 +185,7 @@ def build():
             lines += f'<p><a href="{e(url(p["slug"]))}">Get the pack</a>.</p>'
         secs += f'<section><h3 id="{e(p["slug"])}">{e(p["name"])}</h3>{lines}</section>\n'
     faqh = "".join(f"<h3>{e(a)}</h3><p>{e(b)}</p>\n" for a, b in q)
+    guides = "".join(f'<p><a href="{e(f)}">{e(t)}</a>. {e(d)}</p>\n' for f, t, d in GUIDES)
     page = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -226,7 +230,8 @@ footer{{margin-top:2.5em;color:var(--muted)}}
 {rows}</tbody>
 </table></div>
 <h2>The packs</h2>
-{secs}<h2>FAQ</h2>
+{secs}<h2>Guides</h2>
+{guides}<h2>FAQ</h2>
 {faqh}<h2>Bundles</h2>
 <p>Bundles and sales are on the author page: <a href="{SHOP}/{UTM}">{SHOP.replace('https://', '')}</a>.</p>
 <footer>
@@ -251,6 +256,7 @@ footer{{margin-top:2.5em;color:var(--muted)}}
         else:
             md.append(f"[Get the pack]({url(p['slug'])}).")
         md.append("")
+    md += ["## Guides", ""] + [f"[{t}]({BASE}{f}). {d}" for f, t, d in GUIDES] + [""]
     md += ["## FAQ", ""]
     for a, b in q:
         md += [f"### {a}", "", b, ""]
@@ -262,7 +268,9 @@ footer{{margin-top:2.5em;color:var(--muted)}}
     (SITE / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {BASE}sitemap.xml\n", encoding="utf-8", newline="\n")
     (SITE / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-        f"  <url><loc>{BASE}</loc></url>\n</urlset>\n", encoding="utf-8", newline="\n")
+        f"  <url><loc>{BASE}</loc></url>\n"
+        + "".join(f"  <url><loc>{BASE}{f}</loc></url>\n" for f, _, _ in GUIDES)
+        + "</urlset>\n", encoding="utf-8", newline="\n")
     (SITE / ".nojekyll").write_text("", encoding="utf-8")
     print(f"built {len(packs)} packs")
     for m in missing:

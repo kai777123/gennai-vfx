@@ -1,6 +1,6 @@
 # Godot 4 VFX Packs by gennai
 
-I make VFX packs for Godot 4 and sell them on itch.io. 8 of them are made entirely in code, without textures. They're tested on Forward+, Mobile and Compatibility, which also covers Web exports. The other 2 are pixel-art sprite packs with a Godot project and a Unity package. Below is what each pack is for and where to get it.
+I make VFX packs for Godot 4 and sell them on itch.io. 9 of them are made entirely in code, without textures. They're tested on Forward+, Mobile and Compatibility, which also covers Web exports. The other 2 are pixel-art sprite packs with a Godot project and a Unity package. Below is what each pack is for and where to get it.
 
 ## Which pack do I need?
 
@@ -16,6 +16,7 @@ I make VFX packs for Godot 4 and sell them on itch.io. 8 of them are made entire
 | Light shafts, god rays, fireflies, floating dust | [Light Shafts & Ambient VFX for Godot 4](https://gennai.itch.io/light-shafts-ambient-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) | 64 presets | [Free version](https://gennai.itch.io/free-fireflies-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |
 | Pixel art explosions, fire, smoke | [Pixel Art Explosion & Smoke VFX](https://gennai.itch.io/arcbit-explosion-smoke-vfx?utm_source=github_pages&utm_medium=catalog) | 16 sprite effects | [Free version](https://gennai.itch.io/arcbit-explosion-lite?utm_source=github_pages&utm_medium=catalog) |
 | Pixel art lasers and lightning | [Pixel Art Laser Beam & Lightning VFX (ARCBIT)](https://gennai.itch.io/arcbit-pixel-beams-lightning?utm_source=github_pages&utm_medium=catalog) | 16 sprite effects | [Free version](https://gennai.itch.io/arcbit-lite?utm_source=github_pages&utm_medium=catalog) |
+| Water, splashes, drips, wet surfaces | [Water & Splash VFX for Godot 4](https://gennai.itch.io/water-splash-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) | 48 presets | [Free version](https://gennai.itch.io/free-water-bolt-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |
 
 ## The packs
 
@@ -78,6 +79,16 @@ Sprite sheets for any engine, with a Godot 4.4+ project and a Unity package incl
 16 pixel-art beam and lightning effects as sprite sheets.  
 Sprite sheets for any engine, with a Godot 4.4+ project and a Unity package included.  
 [Get the pack](https://gennai.itch.io/arcbit-pixel-beams-lightning?utm_source=github_pages&utm_medium=catalog) or [try the free version](https://gennai.itch.io/arcbit-lite?utm_source=github_pages&utm_medium=catalog).
+
+### Water & Splash VFX for Godot 4
+
+Wet surfaces, water bolts, splashes, drips and pours, 3D + 2D, 48 presets.  
+36 3D and 12 2D presets, all made in code.  
+[Get the pack](https://gennai.itch.io/water-splash-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) or [try the free version](https://gennai.itch.io/free-water-bolt-vfx-godot-4?utm_source=github_pages&utm_medium=catalog).
+
+## Guides
+
+[How to make a fire effect in Godot 4](https://kai777123.github.io/gennai-vfx/fire-effect-godot-4.html). A campfire in about 60 lines of GDScript, variations, where particles stop being enough, and the pack.
 
 ## FAQ
 

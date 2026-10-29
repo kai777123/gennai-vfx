@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to make a fire effect in Godot 4</title>
+<meta name="description" content="A campfire in Godot 4 in about 60 lines of GDScript (GPUParticles3D, no textures), what to change for torches, walls of fire and blue flames, where particles stop being enough, and a pack with 49 fire presets. Tested on Godot 4.4.1 and 4.7.2.">
+<link rel="canonical" href="https://kai777123.github.io/gennai-vfx/fire-effect-godot-4.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to make a fire effect in Godot 4">
+<meta property="og:description" content="A campfire in about 60 lines of GDScript, variations, limits, and a pack with 49 presets. Tested on Godot 4.4.1 and 4.7.2.">
+<meta property="og:url" content="https://kai777123.github.io/gennai-vfx/fire-effect-godot-4.html">
+<meta property="og:image" content="https://kai777123.github.io/gennai-vfx/img/diy_campfire_godot4.png">
+<style>
+:root{--bg:#fff;--fg:#1c1c20;--muted:#5b5b66;--link:#0b5cd5;--line:#d9d9e0;--head:#f2f2f6;--code:#f5f5f8}
+@media (prefers-color-scheme:dark){:root{--bg:#16161a;--fg:#e8e8ee;--muted:#a0a0ad;--link:#7db2ff;--line:#34343c;--head:#22222a;--code:#1f1f26}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:46rem;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.9rem;line-height:1.25;margin:0 0 .4em}
+h2{font-size:1.35rem;margin:2em 0 .5em}
+p{margin:.6em 0}
+a{color:var(--link)}
+img{max-width:100%;height:auto;display:block;border-radius:6px}
+figure{margin:1.2em 0}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:.4em}
+pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px 14px;overflow-x:auto;font-size:.88rem;line-height:1.45}
+code{font-family:ui-monospace,Consolas,"SF Mono",monospace}
+p code{background:var(--code);padding:1px 4px;border-radius:3px;font-size:.9em}
+.t{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{background:var(--head)}
+.meta{color:var(--muted);font-size:.9rem;margin:0 0 1.5em}
+footer{margin-top:2.5em;color:var(--muted);border-top:1px solid var(--line);padding-top:1em}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "TechArticle",
+ "headline": "How to make a fire effect in Godot 4",
+ "description": "A campfire in Godot 4 in about 60 lines of GDScript (GPUParticles3D, no textures), what to change for torches, walls of fire and blue flames, where particles stop being enough, and a pack with 49 fire presets.",
+ "url": "https://kai777123.github.io/gennai-vfx/fire-effect-godot-4.html",
+ "image": "https://kai777123.github.io/gennai-vfx/img/diy_campfire_godot4.png",
+ "datePublished": "2026-10-29",
+ "dateModified": "2026-10-29",
+ "author": {"@type": "Person", "name": "gennai", "url": "https://gennai.itch.io/"},
+ "proficiencyLevel": "Beginner",
+ "dependencies": "Godot 4.4 or newer",
+ "mentions": {
+  "@type": "Product",
+  "name": "Fire & Explosion VFX for Godot 4 (PYROLUX)",
+  "url": "https://gennai.itch.io/pyrolux-fire-explosion-vfx",
+  "brand": {"@type": "Brand", "name": "gennai"}
+ }
+}
+</script>
+</head>
+<body>
+<main>
+<p class="meta"><a href="./">Godot 4 VFX Packs by gennai</a> › Guides</p>
+<h1>How to make a fire effect in Godot 4</h1>
+<p class="meta">Updated 2026-10-29. Tested on Godot 4.4.1 and 4.7.2, Forward+ and Compatibility.</p>
+
+<p>Short version: a campfire is one <code>GPUParticles3D</code> node drawing additive, billboarded quads, a colour ramp that goes from white through orange to dark, a scale curve that shrinks each puff to nothing at the tip, and a point light that flickers. That's it. Below is that in about 60 lines of GDScript you can paste in, then what to change for torches, walls of fire and blue gas flames, and where this approach stops being enough. At the end is the pack I sell, if you'd rather drop in presets.</p>
+
+<h2>The 60-line campfire</h2>
+<p>Add a <code>Node3D</code>, attach this script, run the scene. It needs no textures: the soft dot each particle uses is generated when the node starts. I ran it on Godot 4.4.1 and 4.7.2, on Forward+ and on Compatibility, and the log had zero errors on all four.</p>
+
+<figure>
+<img src="img/diy_campfire_godot4.png" alt="A small campfire made with GPUParticles3D in Godot 4, on a flat ground with a warm point light" width="960" height="540">
+<figcaption>What the script below gives you on Godot 4.7.2, Forward+, with glow on in the WorldEnvironment.</figcaption>
+</figure>
+
+<pre><code>extends Node3D
+## A small campfire built in code: one additive particle emitter plus a flickering light.
+
+var _light: OmniLight3D
+
+func _ready() -&gt; void:
+	var p := GPUParticles3D.new()
+	p.amount = 48
+	p.lifetime = 0.9
+	p.randomness = 0.3
+
+	var pm := ParticleProcessMaterial.new()
+	pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
+	pm.emission_sphere_radius = 0.15
+	pm.direction = Vector3.UP
+	pm.spread = 8.0
+	pm.initial_velocity_min = 1.2
+	pm.initial_velocity_max = 2.0
+	pm.gravity = Vector3.ZERO
+	pm.scale_min = 0.5
+	pm.scale_max = 0.9
+	# Grow a little, then shrink to nothing at the tip of the flame.
+	var sc := Curve.new()
+	sc.add_point(Vector2(0.0, 0.5))
+	sc.add_point(Vector2(0.25, 1.0))
+	sc.add_point(Vector2(1.0, 0.0))
+	var sct := CurveTexture.new()
+	sct.curve = sc
+	pm.scale_curve = sct
+	# White-yellow core, orange body, fades out dark.
+	var g := Gradient.new()
+	g.set_color(0, Color(1.0, 0.95, 0.6, 1.0))
+	g.add_point(0.35, Color(1.0, 0.45, 0.05, 1.0))
+	g.set_color(g.get_point_count() - 1, Color(0.3, 0.03, 0.0, 0.0))
+	var gt := GradientTexture1D.new()
+	gt.gradient = g
+	pm.color_ramp = gt
+	p.process_material = pm
+
+	# One soft dot, generated at runtime, so the quads have no hard edges.
+	var soft := GradientTexture2D.new()
+	soft.fill = GradientTexture2D.FILL_RADIAL
+	soft.fill_from = Vector2(0.5, 0.5)
+	soft.fill_to = Vector2(0.5, 0.0)
+	var sg := Gradient.new()
+	sg.set_color(0, Color(1, 1, 1, 1))
+	sg.set_color(1, Color(1, 1, 1, 0))
+	soft.gradient = sg
+
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	m.vertex_color_use_as_albedo = true
+	m.albedo_texture = soft
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.5, 0.5)
+	quad.material = m
+	p.draw_pass_1 = quad
+	add_child(p)
+
+	_light = OmniLight3D.new()
+	_light.light_color = Color(1.0, 0.6, 0.25)
+	_light.omni_range = 5.0
+	_light.position.y = 0.6
+	add_child(_light)
+
+func _process(_delta: float) -&gt; void:
+	var t := Time.get_ticks_msec() * 0.001
+	_light.light_energy = 1.4 + 0.5 * sin(t * 23.0) * sin(t * 7.3)
+</code></pre>
+
+<h2>Why it reads as fire</h2>
+<p>Most of the work is in five settings, and if one of them is missing the result looks like orange confetti.</p>
+<div class="t"><table>
+<thead><tr><th>Setting</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td>Additive blend, unshaded</td><td>Overlapping puffs brighten each other. The base where they pile up turns white-hot and the thin tip stays orange. Lighting is off because fire emits light rather than receiving it.</td></tr>
+<tr><td>Colour ramp with alpha to 0</td><td>Each puff starts pale yellow, turns orange around a third of its life, and ends dark and fully transparent. A dark transparent colour adds nothing under additive blending, which is why puffs vanish instead of popping.</td></tr>
+<tr><td>Scale curve ending at 0</td><td>Puffs grow for the first quarter of their life and then shrink to a point. That shrink is what gives the flame its taper. Without it you get a column.</td></tr>
+<tr><td><code>BILLBOARD_PARTICLES</code></td><td>The quads always face the camera and keep the per-particle scale and rotation. It's the billboard mode made for <code>GPUParticles3D</code>, and it also unlocks flipbook animation if you add a texture later.</td></tr>
+<tr><td>Two sines on the light</td><td>One fast sine times one slow sine gives a flicker that never repeats visibly. A single sine looks like a pulsing lamp, and random values every frame look like a strobe.</td></tr>
+</tbody>
+</table></div>
+<p>The generated radial gradient is doing the job a flame texture usually does. A real texture with a few noisy blobs looks better, but the generated one means the script works in any project with nothing to import.</p>
+
+<h2>Variations</h2>
+<p>A torch is the same emitter made small: <code>emission_sphere_radius</code> 0.05, <code>amount</code> 24, velocity 0.8 to 1.4, quad size 0.25, and the light range down to 3. A wall of fire swaps the sphere for <code>EMISSION_SHAPE_BOX</code> with <code>emission_box_extents</code> of <code>Vector3(2, 0.05, 0.1)</code> and <code>amount</code> 200. Blue gas flames keep everything and change the ramp: start <code>Color(0.8, 0.9, 1.0)</code>, middle <code>Color(0.2, 0.5, 1.0)</code>, end dark blue with alpha 0. Wind is one line: <code>pm.gravity = Vector3(2, 0, 0)</code> makes every puff lean further the older it gets, which is how real flames lean.</p>
+<p>Smoke is a second emitter above the flames with the blend mode back on <code>BLEND_MODE_MIX</code>, a grey ramp whose alpha starts around 0.35 and fades to 0, lifetime 2.5, velocity 0.6 to 1.0, and a scale curve that grows the whole time instead of shrinking. Embers are a third emitter with a handful of tiny bright quads, slow upward velocity, a little sideways gravity, and a lifetime of 3 or 4 seconds.</p>
+
+<h2>Where particles stop being enough</h2>
+<p>This setup covers campfires, torches and braziers. These are the four places it runs out.</p>
+<p>Fire that spreads over an object can't be done with an emitter. Setting a crate on fire from the point you hit it means a shader on the crate's own material that grows a noise mask from the hit point, darkens the surface behind the mask, and spawns flames only along the mask's edge. The emitter has no idea where the surface is.</p>
+<p>On Compatibility (which is also what Web exports use) there is no depth texture and particles can't fade where they cross the ground or a wall. You see a hard line. Keeping the emitter a little above the surface and the quads small hides most of it.</p>
+<p>GPU particles aren't deterministic. Two campfires started at the same time drift out of sync, which is fine, but you can't pause an explosion halfway, scrub it, or replay the exact same one. If you need that, the alternative is a static mesh of quads whose positions are computed in the vertex shader from the quad's index, a seed and the current time. Nothing is simulated, the CPU sends a few floats per frame, and the result is identical on every renderer and for every run with the same seed.</p>
+<p>An explosion isn't a bigger campfire. A convincing one is a flash, a fireball that cools into smoke over about a second, a dust skirt along the ground, a shock ring, sparks with gravity and one bounce, debris, a scorch mark and a light pulse, all timed from the same start. That is eight layers to tune per explosion type.</p>
+
+<h2>Or drop in a preset</h2>
+<p>The pack I sell for this, <a href="https://gennai.itch.io/pyrolux-fire-explosion-vfx?utm_source=github_pages&amp;utm_medium=guide&amp;utm_campaign=fire">Fire &amp; Explosion VFX for Godot 4 (PYROLUX)</a>, is the vertex-shader approach from the previous section with 49 presets: 38 in 3D and 11 in 2D, including candles, torches, campfires, bonfires, walls and rings of fire, coloured flames, five explosion styles, smoke columns, sparks, embers and ash, burning objects, lava pools and rivers, flamethrower and thruster jets, scorch marks and a meteor strike. Everything is generated in code. There are no textures and the addon is small. It's tested on Godot 4.4.1 and 4.7.2 on Forward+, Mobile and Compatibility.</p>
+
+<figure>
+<img src="img/pyrolux_campfire.gif" alt="PYROLUX campfire preset in Godot 4: flame tongues, embers and smoke with a flickering light" loading="lazy">
+<figcaption>The <code>fire_campfire</code> preset. Drag it into a scene and it plays.</figcaption>
+</figure>
+
+<p>Using it is a few lines:</p>
+<pre><code>Pyrolux.spawn(self, "explosion_grenade", hit.position)   # one-shot, frees itself
+$Campfire.ignite()
+$Campfire.extinguish()                                   # fades out, then emits `finished`
+$Crate/PyroluxBurn3D.ignite(hit.position)                # fire spreads over any mesh
+Pyrolux.wind = Vector3(2, 0, 0)                          # flames, smoke and embers lean
+</code></pre>
+
+<figure>
+<img src="img/pyrolux_burning_objects.gif" alt="PyroluxBurn3D spreading fire over crates and barrels in Godot 4, charring the surface" loading="lazy">
+<figcaption><code>PyroluxBurn3D</code> under a MeshInstance3D: fire spreads from the hit point, chars the surface and can burn the object away.</figcaption>
+</figure>
+
+<p>There's a <a href="https://gennai.itch.io/pyrolux-lite?utm_source=github_pages&amp;utm_medium=guide&amp;utm_campaign=fire">free version</a> with the campfire and the ground explosion. Check the look and the setup in your own project first. The full pack's itch page has a browser demo of every preset.</p>
+
+<footer>
+<p>More guides and the full list of packs: <a href="./">Godot 4 VFX Packs by gennai</a>. Questions about this one go in the <a href="https://forum.godotengine.org/t/fire-explosion-vfx-for-godot-4-49-presets-2d-set-web-demo-free-lite/145518">Godot forum thread</a>.</p>
+</footer>
+</main>
+</body>
+</html>
