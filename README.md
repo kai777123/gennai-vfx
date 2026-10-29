@@ -92,6 +92,7 @@ Wet surfaces, water bolts, splashes, drips and pours, 3D + 2D, 48 presets.
 [How to make a lightning effect in Godot 4](https://kai777123.github.io/gennai-vfx/lightning-effect-godot-4.html). A bolt in about 80 lines: midpoint displacement, camera-facing ribbons, branches, and the pack.
 [How to make a freeze and frost effect in Godot 4](https://kai777123.github.io/gennai-vfx/ice-effect-godot-4.html). Frost over any mesh with a next_pass shader in about 75 lines, an ice shell, thawing, and the pack.
 [How to make rain in Godot 4](https://kai777123.github.io/gennai-vfx/rain-effect-godot-4.html). Rain that follows the camera in about 40 lines, snow and fog, shelter and splashes, and the pack.
+[How to make a sword trail and slash effect in Godot 4](https://kai777123.github.io/gennai-vfx/sword-trail-godot-4.html). A fading ribbon from the blade's base and tip in about 45 lines, smoothing, slashes and hits, and the pack.
 
 ## FAQ
 

@@ -25,7 +25,9 @@ GUIDES = [("fire-effect-godot-4.html", "How to make a fire effect in Godot 4",
           ("ice-effect-godot-4.html", "How to make a freeze and frost effect in Godot 4",
            "Frost over any mesh with a next_pass shader in about 75 lines, an ice shell, thawing, and the pack."),
           ("rain-effect-godot-4.html", "How to make rain in Godot 4",
-           "Rain that follows the camera in about 40 lines, snow and fog, shelter and splashes, and the pack.")]
+           "Rain that follows the camera in about 40 lines, snow and fog, shelter and splashes, and the pack."),
+          ("sword-trail-godot-4.html", "How to make a sword trail and slash effect in Godot 4",
+           "A fading ribbon from the blade's base and tip in about 45 lines, smoothing, slashes and hits, and the pack.")]
 # itch public titles that differ from the catalog name (catalog starts with a coined word)
 TITLE_OVERRIDE = {"fx2": "Pixel Art Laser Beam & Lightning VFX (ARCBIT)"}
 # sprite packs without a pack.json: README that states Godot / Unity support

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to make a sword trail and slash effect in Godot 4</title>
+<meta name="description" content="A sword trail in Godot 4 in about 45 lines of GDScript: sample the blade's base and tip each frame and draw a fading ribbon with ImmediateMesh, no textures. Smoothing, speed gating, where it runs out (slashes, hits, parries), and a melee pack with 33 presets. Tested on Godot 4.7.2.">
+<link rel="canonical" href="https://kai777123.github.io/gennai-vfx/sword-trail-godot-4.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to make a sword trail and slash effect in Godot 4">
+<meta property="og:description" content="A sword trail in about 45 lines of GDScript, variations, limits, and a melee pack with 33 presets.">
+<meta property="og:url" content="https://kai777123.github.io/gennai-vfx/sword-trail-godot-4.html">
+<meta property="og:image" content="https://kai777123.github.io/gennai-vfx/img/diy_sword_trail_godot4.png">
+<style>
+:root{--bg:#fff;--fg:#1c1c20;--muted:#5b5b66;--link:#0b5cd5;--line:#d9d9e0;--head:#f2f2f6;--code:#f5f5f8}
+@media (prefers-color-scheme:dark){:root{--bg:#16161a;--fg:#e8e8ee;--muted:#a0a0ad;--link:#7db2ff;--line:#34343c;--head:#22222a;--code:#1f1f26}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:46rem;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.9rem;line-height:1.25;margin:0 0 .4em}
+h2{font-size:1.35rem;margin:2em 0 .5em}
+p{margin:.6em 0}
+a{color:var(--link)}
+img{max-width:100%;height:auto;display:block;border-radius:6px}
+figure{margin:1.2em 0}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:.4em}
+pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px 14px;overflow-x:auto;font-size:.88rem;line-height:1.45}
+code{font-family:ui-monospace,Consolas,"SF Mono",monospace}
+p code{background:var(--code);padding:1px 4px;border-radius:3px;font-size:.9em}
+.t{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{background:var(--head)}
+.meta{color:var(--muted);font-size:.9rem;margin:0 0 1.5em}
+footer{margin-top:2.5em;color:var(--muted);border-top:1px solid var(--line);padding-top:1em}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "TechArticle",
+ "headline": "How to make a sword trail and slash effect in Godot 4",
+ "description": "A sword trail in Godot 4 in about 45 lines of GDScript: sample the blade's base and tip each frame and draw a fading ribbon with ImmediateMesh, no textures. Smoothing, speed gating, where it runs out, and a melee pack with 33 presets.",
+ "url": "https://kai777123.github.io/gennai-vfx/sword-trail-godot-4.html",
+ "image": "https://kai777123.github.io/gennai-vfx/img/diy_sword_trail_godot4.png",
+ "datePublished": "2026-10-29",
+ "dateModified": "2026-10-29",
+ "author": {"@type": "Person", "name": "gennai", "url": "https://gennai.itch.io/"},
+ "proficiencyLevel": "Beginner",
+ "dependencies": "Godot 4.4 or newer",
+ "mentions": {
+  "@type": "Product",
+  "name": "Sword Trail & Slash VFX for Godot 4 (EDGEFLUX)",
+  "url": "https://gennai.itch.io/edgeflux-melee-combat-vfx",
+  "brand": {"@type": "Brand", "name": "gennai"}
+ }
+}
+</script>
+</head>
+<body>
+<main>
+<p class="meta"><a href="./">Godot 4 VFX Packs by gennai</a> › Guides</p>
+<h1>How to make a sword trail and slash effect in Godot 4</h1>
+<p class="meta">Updated 2026-10-29. Tested on Godot 4.7.2, Forward+.</p>
+
+<p>Short version: every frame, record where the base and the tip of the blade are in world space. Keep the last 120 ms of those pairs. Draw one triangle strip through them, base, tip, base, tip, with the alpha falling off with age, additive, both sides visible. That's a sword trail. Below is that in about 45 lines with no textures, then what to change for a smoother or two-tone trail and a trail that only shows on fast swings, and the places where a trail stops being enough and a slash begins.</p>
+
+<h2>The 45-line trail</h2>
+<p>Put two <code>Marker3D</code> nodes on the blade, one at the guard and one at the tip. Add a <code>MeshInstance3D</code> anywhere under the blade, attach this script, and point <code>base_path</code> and <code>tip_path</code> at the markers.</p>
+
+<figure>
+<img src="img/diy_sword_trail_godot4.png" alt="A pale blue arc trailing behind a swinging blade in Godot 4, bright at the tip and faint at the base" width="960" height="540">
+<figcaption>The script below, mid-swing, on Godot 4.7.2 with glow on.</figcaption>
+</figure>
+
+<pre><code>extends MeshInstance3D
+## Sword trail: records the blade's base and tip every frame and draws a ribbon that fades with age.
+
+@export var base_path: NodePath
+@export var tip_path: NodePath
+@export var life := 0.12
+@export var color := Color(0.45, 0.75, 1.0)
+
+var _samples: Array = []   # [base, tip, time]
+var _imm := ImmediateMesh.new()
+
+func _ready() -&gt; void:
+	mesh = _imm
+	top_level = true                     # the ribbon lives in world space, not under the swinging blade
+	global_transform = Transform3D.IDENTITY
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.vertex_color_use_as_albedo = true
+	material_override = m
+
+func _process(_delta: float) -&gt; void:
+	var now := Time.get_ticks_msec() * 0.001
+	var b := get_node(base_path) as Node3D
+	var t := get_node(tip_path) as Node3D
+	_samples.append([b.global_position, t.global_position, now])
+	while _samples.size() &gt; 0 and now - _samples[0][2] &gt; life:
+		_samples.pop_front()
+	_imm.clear_surfaces()
+	if _samples.size() &lt; 2:
+		return
+	_imm.surface_begin(Mesh.PRIMITIVE_TRIANGLE_STRIP)
+	for s in _samples:
+		var a: float = 1.0 - (now - s[2]) / life
+		a = a * a * a
+		# Older samples fade, and the base of the blade is transparent so the ribbon reads as a crescent.
+		_imm.surface_set_color(Color(color.r, color.g, color.b, 0.0))
+		_imm.surface_add_vertex(s[0])
+		_imm.surface_set_color(Color(color.r, color.g, color.b, a))
+		_imm.surface_add_vertex(s[1])
+	_imm.surface_end()
+</code></pre>
+
+<h2>Why it works</h2>
+<div class="t"><table>
+<thead><tr><th>Part</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><code>top_level</code></td><td>The mesh ignores its parent's transform and sits at the world origin, so the world-space positions you feed it land where the blade was. Without this the ribbon swings along with the blade and collapses into a line.</td></tr>
+<tr><td>Triangle strip, base then tip</td><td>Alternating base and tip vertices make a strip of quads with no index buffer and no extra bookkeeping. Each pair of samples is one quad.</td></tr>
+<tr><td>Alpha from age, cubed</td><td>Linear fade looks like a wedge. Cubing it makes the tail drop off quickly and keeps the bright part close to the blade.</td></tr>
+<tr><td>Transparent base, bright tip</td><td>The base vertex has alpha 0 and the tip carries the colour. The eye then reads a crescent at the tip rather than a solid fan, which is what a trail looks like in a fighting game.</td></tr>
+<tr><td>Additive, no culling</td><td>Additive blending never darkens the character behind the trail, and with culling off the ribbon is visible from both sides of the swing.</td></tr>
+<tr><td>Life of 120 ms</td><td>At 60 fps that's seven samples. Longer and the ribbon becomes a fan that sits in the air after the swing. Shorter and it's a flicker.</td></tr>
+</tbody>
+</table></div>
+
+<h2>Variations</h2>
+<p>Two-tone is two colours: give the tip vertex white and the base vertex the colour, and the edge of the arc burns hot. A trail that only appears on real swings is a speed gate: keep the previous tip position, and only append a sample when the tip moved faster than about 4 m/s, so idle sway and walking don't leave a ribbon. Smoothing matters at low frame rates, where seven samples turn the arc into a polygon. Run a Catmull-Rom spline through the base points and another through the tip points and emit four sub-points between each pair, and the arc goes round. In 2D the same idea is a <code>Line2D</code> with a width curve and a gradient, fed the tip positions.</p>
+
+<h2>Where it runs out</h2>
+<p>Frame-rate dependence. The ribbon is as smooth as the frame rate. At 30 fps it has half the samples, and on a frame hitch it gets a flat segment. Sampling in <code>_physics_process</code> at a fixed rate and interpolating is the fix, and it's where the simple script stops being simple.</p>
+<p>A slash isn't a trail. The crescent that flashes when an anime character swings is its own shape, drawn with a mask that sweeps across an arc mesh over a tenth of a second, independent of the actual blade path, so it looks the same on every swing. A flying slash is that shape sent forward until it hits something.</p>
+<p>Everything around the hit. The trail is the smallest part of a melee hit. Sparks at the contact point with the surface normal, a flash on a parry, the shield ripple when a strike lands on a barrier, and the ground crack on a slam are each their own effect with their own timing.</p>
+
+<h2>Or drop in a preset</h2>
+<p>The pack I sell for this, <a href="https://gennai.itch.io/edgeflux-melee-combat-vfx?utm_source=github_pages&amp;utm_medium=guide&amp;utm_campaign=sword">Sword Trail &amp; Slash VFX for Godot 4 (EDGEFLUX)</a>, has weapon trails, slashes, thrusts, claws, flying slashes that stop on collision, hit sparks, parries, energy shields in four shapes, ground slams, charge-ups and dashes. 11 3D effects and 5 2D effects, 33 presets and 8 colour palettes, all generated from shaders and typed GDScript with no textures. The trail node has the speed gate built in. Nothing reads the depth or screen texture and nothing uses GPU particle trails or compute shaders, so it draws the same on Forward+, Mobile and Compatibility, Web included. Tested on Godot 4.4.1 and 4.7.2.</p>
+
+<figure>
+<img src="img/edgeflux_weapon_trails.gif" alt="EDGEFLUX weapon trail presets in Godot 4 following a swinging blade in several colours" loading="lazy">
+<figcaption>Weapon trail presets.</figcaption>
+</figure>
+
+<pre><code># A sword trail: add EdgefluxWeaponTrail3D as a child of the blade and set the two offsets.
+$Sword/WeaponTrail.base_offset = Vector3(0, 0.2, 0)
+$Sword/WeaponTrail.tip_offset = Vector3(0, 1.1, 0)
+$Sword/WeaponTrail.auto_emit_speed = 4.0   # only draws while the blade moves fast
+
+# One-shot effects: keep a node around and call it...
+$Slash.slash()            # or slash(true) to sweep the other way
+$Hit.hit(point, normal)
+$Shield.hit(point)
+
+# ...or spawn a preset that frees itself when done.
+const CRIT := preload("res://addons/edgeflux_fx/presets/3d/hit_critical_gold.tscn")
+Edgeflux.hit(CRIT, get_tree().current_scene, point, normal)
+</code></pre>
+
+<figure>
+<img src="img/edgeflux_slash_combo.gif" alt="EDGEFLUX slash combo in Godot 4: crescent slashes with hit sparks" loading="lazy">
+<figcaption>Slashes and hits in a combo.</figcaption>
+</figure>
+
+<p>There's a <a href="https://gennai.itch.io/edgeflux-lite?utm_source=github_pages&amp;utm_medium=guide&amp;utm_campaign=sword">free version</a> with three 3D effects and three presets, so you can check the look and the setup in your own project first. The full pack's itch page has a browser demo of every preset.</p>
+
+<footer>
+<p>More guides and the full list of packs: <a href="./">Godot 4 VFX Packs by gennai</a>.</p>
+</footer>
+</main>
+</body>
+</html>
