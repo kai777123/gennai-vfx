@@ -19,7 +19,13 @@ UTM = "?utm_source=github_pages&utm_medium=catalog"
 H1 = "Godot 4 VFX Packs by gennai"
 # Guide pages (file, title, one line). Added by hand when a page is written.
 GUIDES = [("fire-effect-godot-4.html", "How to make a fire effect in Godot 4",
-           "A campfire in about 60 lines of GDScript, variations, where particles stop being enough, and the pack.")]
+           "A campfire in about 60 lines of GDScript, variations, where particles stop being enough, and the pack."),
+          ("lightning-effect-godot-4.html", "How to make a lightning effect in Godot 4",
+           "A bolt in about 80 lines: midpoint displacement, camera-facing ribbons, branches, and the pack."),
+          ("ice-effect-godot-4.html", "How to make a freeze and frost effect in Godot 4",
+           "Frost over any mesh with a next_pass shader in about 75 lines, an ice shell, thawing, and the pack."),
+          ("rain-effect-godot-4.html", "How to make rain in Godot 4",
+           "Rain that follows the camera in about 40 lines, snow and fog, shelter and splashes, and the pack.")]
 # itch public titles that differ from the catalog name (catalog starts with a coined word)
 TITLE_OVERRIDE = {"fx2": "Pixel Art Laser Beam & Lightning VFX (ARCBIT)"}
 # sprite packs without a pack.json: README that states Godot / Unity support

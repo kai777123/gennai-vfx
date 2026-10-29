@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to make rain in Godot 4</title>
+<meta name="description" content="Rain in Godot 4 in about 40 lines of GDScript: one GPUParticles3D that follows the camera, stretched quads, no textures. What to change for snow, drizzle and fog, where it runs out (shelter, splashes, wind), and a weather pack with 32 presets. Tested on Godot 4.7.2.">
+<link rel="canonical" href="https://kai777123.github.io/gennai-vfx/rain-effect-godot-4.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to make rain in Godot 4">
+<meta property="og:description" content="Rain in about 40 lines of GDScript, snow and fog variations, limits, and a weather pack with 32 presets.">
+<meta property="og:url" content="https://kai777123.github.io/gennai-vfx/rain-effect-godot-4.html">
+<meta property="og:image" content="https://kai777123.github.io/gennai-vfx/img/diy_rain_godot4.png">
+<style>
+:root{--bg:#fff;--fg:#1c1c20;--muted:#5b5b66;--link:#0b5cd5;--line:#d9d9e0;--head:#f2f2f6;--code:#f5f5f8}
+@media (prefers-color-scheme:dark){:root{--bg:#16161a;--fg:#e8e8ee;--muted:#a0a0ad;--link:#7db2ff;--line:#34343c;--head:#22222a;--code:#1f1f26}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:46rem;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.9rem;line-height:1.25;margin:0 0 .4em}
+h2{font-size:1.35rem;margin:2em 0 .5em}
+p{margin:.6em 0}
+a{color:var(--link)}
+img{max-width:100%;height:auto;display:block;border-radius:6px}
+figure{margin:1.2em 0}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:.4em}
+pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px 14px;overflow-x:auto;font-size:.88rem;line-height:1.45}
+code{font-family:ui-monospace,Consolas,"SF Mono",monospace}
+p code{background:var(--code);padding:1px 4px;border-radius:3px;font-size:.9em}
+.t{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{background:var(--head)}
+.meta{color:var(--muted);font-size:.9rem;margin:0 0 1.5em}
+footer{margin-top:2.5em;color:var(--muted);border-top:1px solid var(--line);padding-top:1em}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "TechArticle",
+ "headline": "How to make rain in Godot 4",
+ "description": "Rain in Godot 4 in about 40 lines of GDScript: one GPUParticles3D that follows the camera, stretched quads, no textures. What to change for snow, drizzle and fog, where it runs out, and a weather pack with 32 presets.",
+ "url": "https://kai777123.github.io/gennai-vfx/rain-effect-godot-4.html",
+ "image": "https://kai777123.github.io/gennai-vfx/img/diy_rain_godot4.png",
+ "datePublished": "2026-10-29",
+ "dateModified": "2026-10-29",
+ "author": {"@type": "Person", "name": "gennai", "url": "https://gennai.itch.io/"},
+ "proficiencyLevel": "Beginner",
+ "dependencies": "Godot 4.4 or newer",
+ "mentions": {
+  "@type": "Product",
+  "name": "Weather VFX for Godot 4 (NIMBLUX)",
+  "url": "https://gennai.itch.io/weather-vfx-godot-4",
+  "brand": {"@type": "Brand", "name": "gennai"}
+ }
+}
+</script>
+</head>
+<body>
+<main>
+<p class="meta"><a href="./">Godot 4 VFX Packs by gennai</a> › Guides</p>
+<h1>How to make rain in Godot 4</h1>
+<p class="meta">Updated 2026-10-29. Tested on Godot 4.7.2, Forward+.</p>
+
+<p>Short version: rain is one <code>GPUParticles3D</code> that follows the camera. A flat box emitter 28 m across sits 8 m above the camera, each drop is a quad 2 cm wide and 60 cm tall that turns to face the camera around the Y axis only, drops leave at 14 to 18 m/s straight down, and the material is unshaded and about a third opaque. Move the emitter with the camera every frame and the rain is everywhere you look and nowhere you don't. Below is that in about 40 lines, then snow, drizzle and fog, and the three things this setup can't do.</p>
+
+<h2>The 40-line rain</h2>
+<p>Add a <code>Node3D</code> anywhere in the scene, attach this script, run. It finds the active camera on its own.</p>
+
+<figure>
+<img src="img/diy_rain_godot4.png" alt="Rain streaks falling over grey blocks in a foggy scene in Godot 4" width="960" height="540">
+<figcaption>The script below on Godot 4.7.2, with Environment fog turned on in the WorldEnvironment.</figcaption>
+</figure>
+
+<pre><code>extends Node3D
+## Rain around the camera: one GPUParticles3D with stretched quads that follows the camera.
+
+@export var area := 14.0
+@export var amount := 1500
+
+var _p: GPUParticles3D
+
+func _ready() -&gt; void:
+	_p = GPUParticles3D.new()
+	_p.amount = amount
+	_p.lifetime = 1.0
+	_p.visibility_aabb = AABB(Vector3(-area, -area * 2.0, -area), Vector3(area * 2.0, area * 4.0, area * 2.0))
+
+	var pm := ParticleProcessMaterial.new()
+	pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	pm.emission_box_extents = Vector3(area, 1.0, area)
+	pm.direction = Vector3.DOWN
+	pm.spread = 0.0
+	pm.initial_velocity_min = 14.0
+	pm.initial_velocity_max = 18.0
+	pm.gravity = Vector3(0.0, -4.0, 0.0)
+	_p.process_material = pm
+
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(0.75, 0.85, 1.0, 0.35)
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
+	m.billboard_keep_scale = true
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.02, 0.6)
+	quad.material = m
+	_p.draw_pass_1 = quad
+	add_child(_p)
+
+func _process(_delta: float) -&gt; void:
+	var cam := get_viewport().get_camera_3d()
+	if cam:
+		_p.global_position = cam.global_position + Vector3(0.0, 8.0, 0.0)
+</code></pre>
+
+<h2>Why it works</h2>
+<div class="t"><table>
+<thead><tr><th>Setting</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td>Emitter follows the camera</td><td>Particles are simulated in world space by default (<code>local_coords</code> is off), so moving the emitter doesn't drag the drops already in the air. New drops appear above wherever the camera has got to.</td></tr>
+<tr><td>A big <code>visibility_aabb</code></td><td>Godot culls the whole emitter when its bounding box leaves the view. The default box is small and sits at the node, which is 8 m above the camera, so without this line the rain disappears the moment you look down.</td></tr>
+<tr><td>Tall thin quad, <code>BILLBOARD_FIXED_Y</code></td><td>A 2 cm by 60 cm quad is a drop's motion blur drawn as geometry. Fixed-Y billboarding turns it to face you but keeps it upright, so streaks stay vertical from every angle.</td></tr>
+<tr><td>Speed 14 to 18 m/s, no spread</td><td>Real rain falls at roughly 9 m/s. Faster than that looks right on screen because the streaks are already stretched. The range gives a little variety without the drops crossing.</td></tr>
+<tr><td>Unshaded, 35% alpha</td><td>Drops are mostly transparent and catch no light at this size. Lit drops come out as grey sticks.</td></tr>
+<tr><td>Lifetime 1 s</td><td>At 16 m/s a drop travels 16 m: from 8 m above the camera to 8 m below. Any longer and you're simulating drops under the floor.</td></tr>
+</tbody>
+</table></div>
+
+<h2>Variations</h2>
+<p>Snow is the same emitter slowed down: a square quad of 8 cm, velocity 1 to 2 m/s, lifetime 6, <code>amount</code> 800, <code>turbulence_enabled</code> on the process material so flakes wander, and <code>BILLBOARD_ENABLED</code> instead of fixed Y. Drizzle is <code>amount</code> 400 and alpha 0.2. A downpour is 4000 and a slightly wider quad. Fog that works on every renderer is <code>fog_enabled</code> on the Environment with <code>fog_density</code> around 0.05, which is what the screenshot uses. Volumetric fog looks better but is Forward+ only.</p>
+
+<h2>Where it runs out</h2>
+<p>Shelter. The moment the camera walks under a roof or into a tunnel, it's still raining inside, because the emitter has no idea where walls are. Fixing that means either a collision setup on the particles, or a second system that knows which volumes are covered and kills drops inside them, plus no splashes and no ripples under cover.</p>
+<p>Splashes. Rain that hits the ground without a splash reads as falling threads. Each splash is a tiny burst at the impact point, which needs the impact point, which this emitter doesn't have. A sub-emitter on collision can do it, at the cost of making the whole thing far more expensive.</p>
+<p>Wind. Rain in wind falls slanted and the streaks slant with it, and so do snow and fog. Fixed-Y billboards can't tilt, so slanted streaks mean a custom shader for the quad, and then the same wind has to drive every other weather effect in the scene or they look like they're in different weather.</p>
+
+<h2>Or drop in a preset</h2>
+<p>The pack I sell for this, <a href="https://gennai.itch.io/weather-vfx-godot-4?utm_source=github_pages&amp;utm_medium=guide&amp;utm_campaign=rain">Weather VFX for Godot 4 (NIMBLUX)</a>, has rain, snow, fog, wind, sandstorms, cloud shadows and storm lightning: 9 3D nodes, 4 2D nodes, a weather controller with 12 weather profiles and 32 presets. It covers the three things above. A shelter node stops rain, ripples and splashes under roofs and indoors. Rain comes with splashes and ripples. One wind is shared by rain, snow, fog, wind lines and leaves, with gusts and changing direction. Every effect is one static mesh of quads or ribbons whose vertex shader computes each element's position from its index, a seed and the time, wraps it inside the volume around the camera and faces it to the camera, so the CPU only sets a few shader parameters per frame and nothing hitches on first use. It's tested on Godot 4.4.1 and 4.7.2 on Forward+, Mobile and Compatibility.</p>
+
+<figure>
+<img src="img/nimblux_rain.gif" alt="NIMBLUX rain preset in Godot 4 with splashes on the ground and ripples" loading="lazy">
+<figcaption>The rain preset: streaks, splashes and ripples that stop under shelter.</figcaption>
+</figure>
+
+<pre><code>var rain := NimbluxRain3D.new()
+add_child(rain)
+rain.set_amount_smooth(1.0, 5.0)   # drizzle to downpour over 5 seconds
+
+var weather := NimbluxWeather3D.new()
+add_child(weather)
+weather.transition_to(preload("res://addons/nimblux_fx/profiles/thunderstorm.tres"), 10.0)
+</code></pre>
+
+<figure>
+<img src="img/nimblux_weather_controller.gif" alt="NIMBLUX weather controller in Godot 4 blending from clear weather to a thunderstorm" loading="lazy">
+<figcaption>The weather controller blending whole weather states.</figcaption>
+</figure>
+
+<p>There's a <a href="https://gennai.itch.io/free-rain-vfx-godot-4?utm_source=github_pages&amp;utm_medium=guide&amp;utm_campaign=rain">free version</a> with the 3D rain from the full pack, same look, so you can check it in your own project first. The full pack's itch page has a browser demo of every preset.</p>
+
+<footer>
+<p>More guides and the full list of packs: <a href="./">Godot 4 VFX Packs by gennai</a>.</p>
+</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to make a lightning effect in Godot 4</title>
+<meta name="description" content="A lightning bolt in Godot 4 in about 80 lines of GDScript: midpoint displacement, camera-facing ribbons with ImmediateMesh, branches and a flickering light, no textures. Variations, where it runs out, and a pack with 33 lightning and beam presets. Tested on Godot 4.7.2.">
+<link rel="canonical" href="https://kai777123.github.io/gennai-vfx/lightning-effect-godot-4.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to make a lightning effect in Godot 4">
+<meta property="og:description" content="A lightning bolt in about 80 lines of GDScript, variations, limits, and a pack with 33 presets.">
+<meta property="og:url" content="https://kai777123.github.io/gennai-vfx/lightning-effect-godot-4.html">
+<meta property="og:image" content="https://kai777123.github.io/gennai-vfx/img/diy_lightning_godot4.png">
+<style>
+:root{--bg:#fff;--fg:#1c1c20;--muted:#5b5b66;--link:#0b5cd5;--line:#d9d9e0;--head:#f2f2f6;--code:#f5f5f8}
+@media (prefers-color-scheme:dark){:root{--bg:#16161a;--fg:#e8e8ee;--muted:#a0a0ad;--link:#7db2ff;--line:#34343c;--head:#22222a;--code:#1f1f26}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:46rem;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.9rem;line-height:1.25;margin:0 0 .4em}
+h2{font-size:1.35rem;margin:2em 0 .5em}
+p{margin:.6em 0}
+a{color:var(--link)}
+img{max-width:100%;height:auto;display:block;border-radius:6px}
+figure{margin:1.2em 0}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:.4em}
+pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px 14px;overflow-x:auto;font-size:.88rem;line-height:1.45}
+code{font-family:ui-monospace,Consolas,"SF Mono",monospace}
+p code{background:var(--code);padding:1px 4px;border-radius:3px;font-size:.9em}
+.t{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{background:var(--head)}
+.meta{color:var(--muted);font-size:.9rem;margin:0 0 1.5em}
+footer{margin-top:2.5em;color:var(--muted);border-top:1px solid var(--line);padding-top:1em}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "TechArticle",
+ "headline": "How to make a lightning effect in Godot 4",
+ "description": "A lightning bolt in Godot 4 in about 80 lines of GDScript: midpoint displacement, camera-facing ribbons with ImmediateMesh, branches and a flickering light, no textures. Variations, where it runs out, and a pack with 33 lightning and beam presets.",
+ "url": "https://kai777123.github.io/gennai-vfx/lightning-effect-godot-4.html",
+ "image": "https://kai777123.github.io/gennai-vfx/img/diy_lightning_godot4.png",
+ "datePublished": "2026-10-29",
+ "dateModified": "2026-10-29",
+ "author": {"@type": "Person", "name": "gennai", "url": "https://gennai.itch.io/"},
+ "proficiencyLevel": "Beginner",
+ "dependencies": "Godot 4.4 or newer",
+ "mentions": {
+  "@type": "Product",
+  "name": "Lightning & Beam VFX for Godot 4 (ARCFLUX)",
+  "url": "https://gennai.itch.io/arcflux-lightning-beam-vfx",
+  "brand": {"@type": "Brand", "name": "gennai"}
+ }
+}
+</script>
+</head>
+<body>
+<main>
+<p class="meta"><a href="./">Godot 4 VFX Packs by gennai</a> › Guides</p>
+<h1>How to make a lightning effect in Godot 4</h1>
+<p class="meta">Updated 2026-10-29. Tested on Godot 4.7.2, Forward+.</p>
+
+<p>Short version: a bolt is a jagged line from A to B. You get the jaggedness by splitting the line in the middle, pushing the midpoint sideways by a random amount, and doing that again on every piece five times. Draw it as a thin ribbon that faces the camera with additive blending, draw a wider, dimmer copy behind it for the glow, hang two or three short branches off it, add a light with a random energy, and rebuild the whole thing every 40 to 90 ms. That rebuild rate is the flicker. Below is that in about 80 lines of GDScript with no textures, what to change for a sky strike or a chain, and where it runs out.</p>
+
+<h2>The 80-line bolt</h2>
+<p>Add a <code>MeshInstance3D</code>, attach this script, set <code>target</code> in the inspector (it's relative to the node), run. The ribbon is an <code>ImmediateMesh</code> rebuilt from scratch each time.</p>
+
+<figure>
+<img src="img/diy_lightning_godot4.png" alt="A jagged blue-white lightning bolt with branches arcing between two dark posts in Godot 4" width="960" height="540">
+<figcaption>The script below, between two posts, on Godot 4.7.2 with glow on.</figcaption>
+</figure>
+
+<pre><code>extends MeshInstance3D
+## A lightning bolt from this node to `target`, rebuilt a few times a second.
+## Camera-facing strips drawn with ImmediateMesh, no textures.
+
+@export var target := Vector3(0.0, 0.0, -4.0)
+@export var width := 0.06
+@export var jitter := 0.22
+@export var branches := 3
+
+var _imm := ImmediateMesh.new()
+var _timer := 0.0
+var _light: OmniLight3D
+
+func _ready() -&gt; void:
+	mesh = _imm
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.vertex_color_use_as_albedo = true
+	material_override = m
+	_light = OmniLight3D.new()
+	_light.light_color = Color(0.6, 0.75, 1.0)
+	_light.omni_range = 8.0
+	add_child(_light)
+
+func _process(delta: float) -&gt; void:
+	_timer -= delta
+	if _timer &gt; 0.0:
+		return
+	_timer = randf_range(0.04, 0.09)
+	_rebuild()
+
+func _rebuild() -&gt; void:
+	var cam := get_viewport().get_camera_3d()
+	var eye := to_local(cam.global_position) if cam else Vector3(0, 0, 10)
+	_imm.clear_surfaces()
+	var pts := _path(Vector3.ZERO, target, jitter)
+	_strip(pts, width * 3.0, Color(0.25, 0.35, 1.0, 0.35), eye)   # soft glow
+	_strip(pts, width, Color(0.85, 0.92, 1.0), eye)               # bright core
+	for i in branches:
+		var k := randi_range(2, pts.size() - 3)
+		var dir := (pts[k] - pts[k - 1]).normalized()
+		var away := Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1))
+		var end := pts[k] + (dir + away * 0.9).normalized() * randf_range(0.4, 1.2)
+		_strip(_path(pts[k], end, jitter), width * 0.5, Color(0.7, 0.8, 1.0, 0.8), eye)
+	_light.position = target * 0.5
+	_light.light_energy = randf_range(1.0, 4.0)
+
+## Midpoint displacement: split each segment and push the middle sideways.
+func _path(a: Vector3, b: Vector3, amp: float) -&gt; PackedVector3Array:
+	var pts := PackedVector3Array([a, b])
+	for _step in 5:
+		var out := PackedVector3Array()
+		for i in pts.size() - 1:
+			var p := pts[i]
+			var q := pts[i + 1]
+			var off := Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1))
+			off -= off.project(q - p)
+			out.append(p)
+			out.append((p + q) * 0.5 + off * amp * (q - p).length())
+		out.append(pts[pts.size() - 1])
+		pts = out
+	return pts
+
+## A ribbon of width w along pts, turned to face the eye.
+func _strip(pts: PackedVector3Array, w: float, col: Color, eye: Vector3) -&gt; void:
+	_imm.surface_begin(Mesh.PRIMITIVE_TRIANGLE_STRIP)
+	for i in pts.size():
+		var p := pts[i]
+		var dir := (pts[mini(i + 1, pts.size() - 1)] - pts[maxi(i - 1, 0)]).normalized()
+		var side := dir.cross((eye - p).normalized()).normalized() * w * 0.5
+		_imm.surface_set_color(col)
+		_imm.surface_add_vertex(p - side)
+		_imm.surface_set_color(col)
+		_imm.surface_add_vertex(p + side)
+	_imm.surface_end()
+</code></pre>
+
+<h2>Why it reads as lightning</h2>
+<div class="t"><table>
+<thead><tr><th>Part</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td>Midpoint displacement</td><td>Five rounds of splitting turn 2 points into 33. The offset is a fraction of the segment's own length, so the first split moves the middle a lot and the last splits only add fine noise. That mix of big bends and small kinks is the lightning look. Random points along a straight line give a sawtooth instead.</td></tr>
+<tr><td>Offsets at right angles</td><td><code>off -= off.project(q - p)</code> removes the part of the push that runs along the segment. Without it the points bunch up and the bolt folds back on itself.</td></tr>
+<tr><td>Two strips</td><td>The core is thin and nearly white. The glow is three times wider, blue and 35% opaque. With additive blending they add up to a hot white centre with a blue halo, and it works on Compatibility, where the engine's own glow is weaker.</td></tr>
+<tr><td>Ribbon facing the eye</td><td>For each point, the cross product of the line direction and the direction to the camera gives a sideways vector that's always in the screen plane. The ribbon never shows its edge.</td></tr>
+<tr><td>Branches</td><td>Each branch starts at a random point on the main bolt, heads roughly the way the bolt is going plus a random tilt, and is shorter, thinner and dimmer. Two or three is plenty. Ten looks like a bush.</td></tr>
+<tr><td>Rebuild every 40 to 90 ms</td><td>Lightning doesn't move, it gets replaced. A new random shape several times a second reads as flicker. The light's energy is rolled at the same time so the scene flickers with it.</td></tr>
+</tbody>
+</table></div>
+
+<h2>Variations</h2>
+<p>A sky strike is the same node placed 20 m up with <code>target</code> on the ground, shown for a fifth of a second and then hidden. Raise the displacement rounds from 5 to 7 for a bolt that long, or the segments between points get visibly straight. Chain lightning is one bolt per pair of enemies, started from the previous enemy's position. A continuous arc, say between two Tesla poles, is the script as it stands with <code>jitter</code> dropped to about 0.1 and the light range reduced. For a bolt that fades instead of vanishing, keep the last three shapes around with an age each and draw the older ones with lower alpha.</p>
+
+<h2>Where it runs out</h2>
+<p>The ribbon is rebuilt on the CPU in GDScript. One bolt costs nothing, fifty bolts a frame is where you start noticing it, and an electric aura crawling over a character's mesh needs hundreds of tiny arcs that follow the surface, which this script has no way to do.</p>
+<p>A strike is more than the bolt. The things that sell it are a flash on the ground where it lands, a scorch mark that stays, sparks that scatter and bounce, an after-image that fades over a third of a second, and a light pulse that's much brighter than the ambient flicker. Each is its own small effect with its own timing.</p>
+<p>On Compatibility, each mesh can be lit by up to 8 lights by default, so a scene with many bolts needs their lights rationed or pooled. The strips themselves draw identically on all three renderers.</p>
+
+<h2>Or drop in a preset</h2>
+<p>The pack I sell for this, <a href="https://gennai.itch.io/arcflux-lightning-beam-vfx?utm_source=github_pages&amp;utm_medium=guide&amp;utm_campaign=lightning">Lightning &amp; Beam VFX for Godot 4 (ARCFLUX)</a>, has 33 presets: 27 in 3D and 6 in 2D. Bolts, a sky strike with ground flash and scorch mark, chain lightning, a continuous arc between two moving nodes, an electric aura on any mesh, a Tesla coil and a plasma ball, an energy beam with a charge-up, a railgun trail, heal and tractor beams, an EMP shockwave and an electric impact burst, in six palettes. The ribbons are <code>ArrayMesh</code> strips expanded to face the camera in the vertex shader rather than on the CPU, so a scene full of arcs stays cheap. It uses no compute shaders, no particle trails and no screen or depth textures, which is why it behaves the same on Forward+, Mobile and Compatibility. Tested on Godot 4.4.1 and 4.7.2.</p>
+
+<figure>
+<img src="img/arcflux_bolt.gif" alt="ARCFLUX lightning bolt preset in Godot 4 striking between two points with branches and a flash" loading="lazy">
+<figcaption>The bolt preset.</figcaption>
+</figure>
+
+<pre><code>var bolt := ArcfluxBolt3D.new()
+add_child(bolt)
+bolt.strike($Hand.global_position, $Enemy.global_position)
+
+$Laser.set_active(Input.is_action_pressed("fire"))   # continuous effects
+</code></pre>
+
+<figure>
+<img src="img/arcflux_chain.gif" alt="ARCFLUX chain lightning in Godot 4 jumping from one target to the next" loading="lazy">
+<figcaption>Chain lightning: <code>chain([a, b, c])</code>.</figcaption>
+</figure>
+
+<p>There's a <a href="https://gennai.itch.io/arcflux-lite?utm_source=github_pages&amp;utm_medium=guide&amp;utm_campaign=lightning">free version</a> with the two core effects and two presets, using the same addon folder and class names, so an upgrade is a copy over the top. The full pack's itch page has a browser demo of every preset.</p>
+
+<footer>
+<p>More guides and the full list of packs: <a href="./">Godot 4 VFX Packs by gennai</a>.</p>
+</footer>
+</main>
+</body>
+</html>

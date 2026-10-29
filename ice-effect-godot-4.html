@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to make a freeze and frost effect in Godot 4</title>
+<meta name="description" content="Frost that grows over any mesh in Godot 4: a next_pass shader in about 75 lines, no textures, no UVs needed. What to change for an ice shell, thawing and frozen ground, where it runs out, and an ice pack with 49 presets. Tested on Godot 4.7.2.">
+<link rel="canonical" href="https://kai777123.github.io/gennai-vfx/ice-effect-godot-4.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to make a freeze and frost effect in Godot 4">
+<meta property="og:description" content="Frost over any mesh with a next_pass shader in about 75 lines, variations, limits, and a pack with 49 presets.">
+<meta property="og:url" content="https://kai777123.github.io/gennai-vfx/ice-effect-godot-4.html">
+<meta property="og:image" content="https://kai777123.github.io/gennai-vfx/img/diy_frost_godot4.png">
+<style>
+:root{--bg:#fff;--fg:#1c1c20;--muted:#5b5b66;--link:#0b5cd5;--line:#d9d9e0;--head:#f2f2f6;--code:#f5f5f8}
+@media (prefers-color-scheme:dark){:root{--bg:#16161a;--fg:#e8e8ee;--muted:#a0a0ad;--link:#7db2ff;--line:#34343c;--head:#22222a;--code:#1f1f26}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:46rem;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.9rem;line-height:1.25;margin:0 0 .4em}
+h2{font-size:1.35rem;margin:2em 0 .5em}
+p{margin:.6em 0}
+a{color:var(--link)}
+img{max-width:100%;height:auto;display:block;border-radius:6px}
+figure{margin:1.2em 0}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:.4em}
+pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px 14px;overflow-x:auto;font-size:.88rem;line-height:1.45}
+code{font-family:ui-monospace,Consolas,"SF Mono",monospace}
+p code{background:var(--code);padding:1px 4px;border-radius:3px;font-size:.9em}
+.t{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{background:var(--head)}
+.meta{color:var(--muted);font-size:.9rem;margin:0 0 1.5em}
+footer{margin-top:2.5em;color:var(--muted);border-top:1px solid var(--line);padding-top:1em}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "TechArticle",
+ "headline": "How to make a freeze and frost effect in Godot 4",
+ "description": "Frost that grows over any mesh in Godot 4: a next_pass shader in about 75 lines, no textures, no UVs needed. What to change for an ice shell, thawing and frozen ground, where it runs out, and an ice pack with 49 presets.",
+ "url": "https://kai777123.github.io/gennai-vfx/ice-effect-godot-4.html",
+ "image": "https://kai777123.github.io/gennai-vfx/img/diy_frost_godot4.png",
+ "datePublished": "2026-10-29",
+ "dateModified": "2026-10-29",
+ "author": {"@type": "Person", "name": "gennai", "url": "https://gennai.itch.io/"},
+ "proficiencyLevel": "Beginner",
+ "dependencies": "Godot 4.4 or newer",
+ "mentions": {
+  "@type": "Product",
+  "name": "Ice & Frost VFX for Godot 4",
+  "url": "https://gennai.itch.io/ice-frost-vfx-godot-4",
+  "brand": {"@type": "Brand", "name": "gennai"}
+ }
+}
+</script>
+</head>
+<body>
+<main>
+<p class="meta"><a href="./">Godot 4 VFX Packs by gennai</a> › Guides</p>
+<h1>How to make a freeze and frost effect in Godot 4</h1>
+<p class="meta">Updated 2026-10-29. Tested on Godot 4.7.2, Forward+.</p>
+
+<p>Short version: frost on an object is a second material pass drawn over the object's own material. Godot has a slot for exactly that, <code>next_pass</code>, so the object keeps its texture and its lighting and the frost sits on top. Inside the pass, noise sampled in world space decides where the frost is, the normal's Y decides that the top faces frost first, and one <code>amount</code> uniform grows the cover from nothing to everything. Below is that as one script of about 75 lines, shader included, no textures and no UVs needed, then an ice shell, thawing and frozen ground, and where this stops being enough.</p>
+
+<h2>The 75-line frost</h2>
+<p>Attach this to any <code>MeshInstance3D</code> and call <code>freeze(1.0)</code>. It wraps whatever material the mesh already has.</p>
+
+<figure>
+<img src="img/diy_frost_godot4.png" alt="A red sphere fully covered in frost and a green box half covered, frost settling on the top faces first, in Godot 4" width="960" height="540">
+<figcaption>The script below on Godot 4.7.2. The sphere is at <code>amount</code> 1.0, the box at 0.5.</figcaption>
+</figure>
+
+<pre><code>extends MeshInstance3D
+## Frost that grows over this mesh. Runs as a next_pass, so the mesh keeps its own material.
+
+const FROST_SHADER := """
+shader_type spatial;
+render_mode blend_mix, cull_back;
+
+uniform float amount : hint_range(0.0, 1.0) = 0.0;
+uniform vec3 frost_color : source_color = vec3(0.86, 0.94, 1.0);
+uniform float scale = 5.0;
+
+varying vec3 wpos;
+varying vec3 wnrm;
+
+float hash(vec3 p) {
+	p = fract(p * 0.3183099 + vec3(0.1, 0.2, 0.3));
+	p *= 17.0;
+	return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+
+float noise(vec3 p) {
+	vec3 i = floor(p);
+	vec3 f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	float a = mix(hash(i), hash(i + vec3(1.0, 0.0, 0.0)), f.x);
+	float b = mix(hash(i + vec3(0.0, 1.0, 0.0)), hash(i + vec3(1.0, 1.0, 0.0)), f.x);
+	float c = mix(hash(i + vec3(0.0, 0.0, 1.0)), hash(i + vec3(1.0, 0.0, 1.0)), f.x);
+	float d = mix(hash(i + vec3(0.0, 1.0, 1.0)), hash(i + vec3(1.0, 1.0, 1.0)), f.x);
+	return mix(mix(a, b, f.y), mix(c, d, f.y), f.z);
+}
+
+void vertex() {
+	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	wnrm = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+}
+
+void fragment() {
+	float n = noise(wpos * scale) * 0.65 + noise(wpos * scale * 2.7) * 0.35;
+	float up = wnrm.y * 0.5 + 0.5;
+	// Frost settles on the top faces first and creeps down as amount rises.
+	float cover = amount * 1.4 - n * 0.7 - (1.0 - up) * 0.4;
+	float m = smoothstep(0.0, 0.12, cover);
+	float sparkle = pow(noise(wpos * 60.0), 12.0) * 4.0;
+	ALBEDO = frost_color;
+	ALPHA = m;
+	ROUGHNESS = 0.35;
+	SPECULAR = 0.7;
+	EMISSION = frost_color * sparkle * m * 0.6;
+}
+"""
+
+var _mat: ShaderMaterial
+var _tween: Tween
+var _amount := 0.0
+
+func _ready() -&gt; void:
+	var sh := Shader.new()
+	sh.code = FROST_SHADER
+	_mat = ShaderMaterial.new()
+	_mat.shader = sh
+	var base := get_active_material(0)
+	if base == null:
+		base = StandardMaterial3D.new()
+		material_override = base
+	base.next_pass = _mat
+	_mat.set_shader_parameter("amount", _amount)
+
+## freeze(1.0) covers the mesh, freeze(0.0) thaws it.
+func freeze(to: float, seconds: float = 1.5) -&gt; void:
+	if _tween:
+		_tween.kill()
+	_tween = create_tween()
+	_tween.tween_method(_set_amount, _amount, to, seconds)
+
+func _set_amount(v: float) -&gt; void:
+	_amount = v
+	_mat.set_shader_parameter("amount", v)
+</code></pre>
+
+<h2>Why it works</h2>
+<div class="t"><table>
+<thead><tr><th>Part</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><code>next_pass</code></td><td>The mesh is drawn twice: once with its own material, then again with the frost. The second draw uses the same vertices, so it follows a skinned, animated character for free and never floats off the surface. Your material is never edited.</td></tr>
+<tr><td>Noise in world space</td><td>The pattern is sampled from the fragment's world position, so it needs no UVs and looks the same on a sphere, a crate and a character. Two octaves, one coarse and one finer, give patches with ragged edges.</td></tr>
+<tr><td>Top faces first</td><td><code>up</code> is 1 on faces pointing up and 0 on faces pointing down. Subtracting <code>(1 - up) * 0.4</code> from the cover means frost reaches the top of an object first and the underside last, which is how frost actually settles.</td></tr>
+<tr><td><code>smoothstep</code> edge</td><td>The cover value is a signed distance to the frost line. A 0.12-wide smoothstep across it gives an edge that's soft but still an edge. Without it the frost fades in everywhere at once like a tint.</td></tr>
+<tr><td>Sparkle</td><td>A third, very high-frequency noise raised to the 12th power is zero almost everywhere and bright in a few specks. Fed to <code>EMISSION</code>, those specks read as ice crystals catching the light.</td></tr>
+<tr><td>One uniform, one tween</td><td>Everything is driven by <code>amount</code>. Freezing, thawing and partial freeze are the same shader at different values, so the game code is one call.</td></tr>
+</tbody>
+</table></div>
+
+<h2>Variations</h2>
+<p>Freezing from a hit point is one uniform more: pass the hit position as <code>hit_point</code> and use <code>cover = amount * 3.0 - distance(wpos, hit_point) - n * 0.7</code>, so the frost spreads out from where the ice bolt landed. For objects that move, sample the noise from <code>VERTEX</code> instead of world position, or the pattern slides across them as they walk. An ice shell is a second <code>next_pass</code> after this one that pushes each vertex out 2 cm along its normal, with low roughness, a pale blue tint and a fresnel rim so the silhouette glows. Thawing is <code>freeze(0.0)</code> with the base material's roughness dropped for a few seconds, which reads as wet. Frozen ground is a flat quad with the same shader and <code>scale</code> raised.</p>
+
+<h2>Where it runs out</h2>
+<p>Shattering. The payoff of a freeze is the frozen thing breaking into shards of itself, and no shader does that. It takes building shard meshes from the object's own geometry, launching them with gravity and spin, and hiding the original at the same frame.</p>
+<p>The in-between states. A convincing freeze is frost, then the shell forming over the frost, then drips and a wet sheen when it thaws, and each is timed against the others. Getting the overlaps right is most of the work.</p>
+<p>Refraction. A real ice shell bends what's behind it, which needs the screen texture. Compatibility, and so Web exports, have no screen texture, so a shell there has to lean on the rim light and the cracks instead of refraction.</p>
+
+<h2>Or drop in a preset</h2>
+<p>The pack I sell for this, <a href="https://gennai.itch.io/ice-frost-vfx-godot-4?utm_source=github_pages&amp;utm_medium=guide&amp;utm_campaign=ice">Ice &amp; Frost VFX for Godot 4</a>, freezes any mesh: frost spreads from where it was hit, an ice shell forms, then it thaws or shatters into shards of itself. Ten 3D nodes and five 2D nodes, 49 presets, no textures and no imported meshes, with every pattern computed in a shader and every mesh built in code. On top of the freeze there are ice spikes, a frost breath and freeze ray, a blizzard vortex, frost and frozen puddles on the ground, ice projectiles, impacts, shard bursts, a wall of ice and a cold aura for characters. The refraction on the shell runs on Forward+ and Mobile and is compiled out on Compatibility, where the same shell is drawn without it. Tested on Godot 4.4.1, 4.5.2, 4.6.3 and 4.7.2 with zero errors and zero warnings across all three renderers.</p>
+
+<figure>
+<img src="img/ice_freeze_anything.gif" alt="Ice & Frost VFX in Godot 4 freezing a mesh from the hit point, with frost spreading and an ice shell forming" loading="lazy">
+<figcaption>Freeze any mesh: frost from the hit point, then the shell.</figcaption>
+</figure>
+
+<pre><code># A GlaciluxFreeze3D as a child of the MeshInstance3D you want to freeze.
+$Crate/Freeze.freeze(hit.position)          # frost spreads from the hit point
+$Crate/Freeze.thaw()                        # melts, drips, leaves a wet sheen
+$Crate/Freeze.shatter(hit.position, 1.4)    # breaks into shards of itself
+
+Glacilux.spawn(self, "impact_shards", hit.position)
+</code></pre>
+
+<figure>
+<img src="img/ice_freeze_and_thaw.gif" alt="Ice & Frost VFX in Godot 4: a frozen object thawing, dripping and left with a wet sheen" loading="lazy">
+<figcaption>Freeze and thaw.</figcaption>
+</figure>
+
+<p>There's a <a href="https://gennai.itch.io/free-ice-lance-vfx-godot-4?utm_source=github_pages&amp;utm_medium=guide&amp;utm_campaign=ice">free version</a>: an ice lance that flies, leaves a trail of cold mist, hits and shatters into a crown of ice, shards and a patch of frost. One projectile node, one impact node, two presets. The full pack's itch page has a browser demo of every preset.</p>
+
+<footer>
+<p>More guides and the full list of packs: <a href="./">Godot 4 VFX Packs by gennai</a>.</p>
+</footer>
+</main>
+</body>
+</html>
