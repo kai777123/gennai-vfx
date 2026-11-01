@@ -93,6 +93,7 @@ Wet surfaces, water bolts, splashes, drips and pours, 3D + 2D, 48 presets.
 [How to make a freeze and frost effect in Godot 4](https://kai777123.github.io/gennai-vfx/ice-effect-godot-4.html). Frost over any mesh with a next_pass shader in about 75 lines, an ice shell, thawing, and the pack.
 [How to make rain in Godot 4](https://kai777123.github.io/gennai-vfx/rain-effect-godot-4.html). Rain that follows the camera in about 40 lines, snow and fog, shelter and splashes, and the pack.
 [How to make a sword trail and slash effect in Godot 4](https://kai777123.github.io/gennai-vfx/sword-trail-godot-4.html). A fading ribbon from the blade's base and tip in about 45 lines, smoothing, slashes and hits, and the pack.
+[Best Godot 4 VFX packs in 2026 (free and paid)](https://kai777123.github.io/gennai-vfx/best-godot-4-vfx-packs.html). 23 packs from 12 authors compared by use: price, 2D or 3D, Godot version, free versions and browser demos. Mine are in the list, said up front.
 
 ## FAQ
 
