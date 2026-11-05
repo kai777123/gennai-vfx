@@ -121,6 +121,10 @@ Turn any mesh to ash, stone, acid or sand from the hit point, souls that leave t
 Sprite sheets for any engine.  
 [Get the pack](https://gennai.itch.io/death-dissolve-petrify-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) or [try the free version](https://gennai.itch.io/death-dissolve-petrify-vfx-godot-4?utm_source=github_pages&utm_medium=catalog).
 
+## Free samples on GitHub
+
+The free versions of twelve packs are also on GitHub under the MIT license: https://github.com/kai777123/godot-4-free-vfx.
+
 ## Guides
 
 [How to make a fire effect in Godot 4](https://kai777123.github.io/gennai-vfx/fire-effect-godot-4.html). A campfire in about 60 lines of GDScript, variations, where particles stop being enough, and the pack.

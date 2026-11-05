@@ -242,7 +242,9 @@ footer{{margin-top:2.5em;color:var(--muted)}}
 {rows}</tbody>
 </table></div>
 <h2>The packs</h2>
-{secs}<h2>Guides</h2>
+{secs}<h2>Free samples on GitHub</h2>
+<p>The free versions of twelve packs are also on GitHub under the MIT license: <a href="https://github.com/kai777123/godot-4-free-vfx">github.com/kai777123/godot-4-free-vfx</a>.</p>
+<h2>Guides</h2>
 {guides}<h2>FAQ</h2>
 {faqh}<h2>Bundles</h2>
 <p>Bundles and sales are on the author page: <a href="{SHOP}/{UTM}">{SHOP.replace('https://', '')}</a>.</p>
@@ -268,6 +270,7 @@ footer{{margin-top:2.5em;color:var(--muted)}}
         else:
             md.append(f"[Get the pack]({url(p['slug'])}).")
         md.append("")
+    md += ["## Free samples on GitHub", "", "The free versions of twelve packs are also on GitHub under the MIT license: https://github.com/kai777123/godot-4-free-vfx.", ""]
     md += ["## Guides", ""] + [f"[{t}]({BASE}{f}). {d}" for f, t, d in GUIDES] + [""]
     md += ["## FAQ", ""]
     for a, b in q:
