@@ -123,7 +123,7 @@ Sprite sheets for any engine.
 
 ## Free samples on GitHub
 
-The free versions of twelve packs are also on GitHub under the MIT license: https://github.com/kai777123/godot-4-free-vfx.
+The free versions of thirteen packs are also on GitHub under the MIT license: https://github.com/kai777123/godot-4-free-vfx.
 
 ## Guides
 
