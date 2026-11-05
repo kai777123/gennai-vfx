@@ -1,6 +1,6 @@
 # Godot 4 VFX Packs by gennai
 
-I make VFX packs for Godot 4 and sell them on itch.io. 9 of them are made entirely in code, without textures. They're tested on Forward+, Mobile and Compatibility, which also covers Web exports. The other 2 are pixel-art sprite packs with a Godot project and a Unity package. Below is what each pack is for and where to get it.
+I make VFX packs for Godot 4 and sell them on itch.io. 12 of them are made entirely in code, without textures. They're tested on Forward+, Mobile and Compatibility, which also covers Web exports. The other 4 are pixel-art sprite packs with a Godot project and a Unity package. Below is what each pack is for and where to get it.
 
 ## Which pack do I need?
 
@@ -17,6 +17,11 @@ I make VFX packs for Godot 4 and sell them on itch.io. 9 of them are made entire
 | Pixel art explosions, fire, smoke | [Pixel Art Explosion & Smoke VFX](https://gennai.itch.io/arcbit-explosion-smoke-vfx?utm_source=github_pages&utm_medium=catalog) | 16 sprite effects | [Free version](https://gennai.itch.io/arcbit-explosion-lite?utm_source=github_pages&utm_medium=catalog) |
 | Pixel art lasers and lightning | [Pixel Art Laser Beam & Lightning VFX (ARCBIT)](https://gennai.itch.io/arcbit-pixel-beams-lightning?utm_source=github_pages&utm_medium=catalog) | 16 sprite effects | [Free version](https://gennai.itch.io/arcbit-lite?utm_source=github_pages&utm_medium=catalog) |
 | Water, splashes, drips, wet surfaces | [Water & Splash VFX for Godot 4](https://gennai.itch.io/water-splash-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) | 48 presets | [Free version](https://gennai.itch.io/free-water-bolt-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |
+| hex energy shields that wrap any mesh | [Sci-Fi Shield & Hologram VFX for Godot 4](https://gennai.itch.io/sci-fi-shield-hologram-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |  | [Free version](https://gennai.itch.io/free-laser-beam-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |
+| a curse that crawls over any mesh | [Dark Magic, Holy & Arcane VFX for Godot 4](https://gennai.itch.io/magic-spell-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) | 49 presets | [Free version](https://gennai.itch.io/free-magic-bolt-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |
+| wounds that stay on any mesh | [Blood & Hit VFX for Godot 4](https://gennai.itch.io/blood-hit-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) | 47 presets | [Free version](https://gennai.itch.io/free-hit-spark-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |
+| one blast node and everything in range reacts: crates scorch and break | [Explosion VFX for Godot 4](https://gennai.itch.io/explosion-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) | 112 presets | [Free version](https://gennai.itch.io/explosion-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |
+| turn any mesh to ash | [Death, Dissolve & Petrify VFX for Godot 4](https://gennai.itch.io/death-dissolve-petrify-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |  | [Free version](https://gennai.itch.io/death-dissolve-petrify-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |
 
 ## The packs
 
@@ -85,6 +90,36 @@ Sprite sheets for any engine, with a Godot 4.4+ project and a Unity package incl
 Wet surfaces, water bolts, splashes, drips and pours, 3D + 2D, 48 presets.  
 36 3D and 12 2D presets, all made in code.  
 [Get the pack](https://gennai.itch.io/water-splash-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) or [try the free version](https://gennai.itch.io/free-water-bolt-vfx-godot-4?utm_source=github_pages&utm_medium=catalog).
+
+### Sci-Fi Shield & Hologram VFX for Godot 4
+
+Hex energy shields that wrap any mesh, holograms, lasers and scans, 3D + 2D, 60 presets.  
+Sprite sheets for any engine.  
+[Get the pack](https://gennai.itch.io/sci-fi-shield-hologram-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) or [try the free version](https://gennai.itch.io/free-laser-beam-vfx-godot-4?utm_source=github_pages&utm_medium=catalog).
+
+### Dark Magic, Holy & Arcane VFX for Godot 4
+
+A curse that crawls over any mesh, magic circles, bolts and auras in three schools, 3D + 2D, 49 presets.  
+36 3D and 13 2D presets, all made in code.  
+[Get the pack](https://gennai.itch.io/magic-spell-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) or [try the free version](https://gennai.itch.io/free-magic-bolt-vfx-godot-4?utm_source=github_pages&utm_medium=catalog).
+
+### Blood & Hit VFX for Godot 4
+
+Wounds that stay on any mesh, even a walking character, blood that drips and pools, a bloodless mode, 3D + 2D, 44 presets.  
+33 3D and 14 2D presets, all made in code.  
+[Get the pack](https://gennai.itch.io/blood-hit-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) or [try the free version](https://gennai.itch.io/free-hit-spark-vfx-godot-4?utm_source=github_pages&utm_medium=catalog).
+
+### Explosion VFX for Godot 4
+
+One blast node and everything in range reacts: crates scorch and break, figures stagger, the floor keeps a crater, 20 explosion families, 3D + 2D, 112 presets.  
+95 3D and 17 2D presets, all made in code.  
+[Get the pack](https://gennai.itch.io/explosion-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) or [try the free version](https://gennai.itch.io/explosion-vfx-godot-4?utm_source=github_pages&utm_medium=catalog).
+
+### Death, Dissolve & Petrify VFX for Godot 4
+
+Turn any mesh to ash, stone, acid or sand from the hit point, souls that leave the body, shatter bursts and death slashes, 3D + 2D, 45 presets.  
+Sprite sheets for any engine.  
+[Get the pack](https://gennai.itch.io/death-dissolve-petrify-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) or [try the free version](https://gennai.itch.io/death-dissolve-petrify-vfx-godot-4?utm_source=github_pages&utm_medium=catalog).
 
 ## Guides
 
