@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-439CSY86RJ"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-439CSY86RJ');</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to make an explosion effect in Godot 4</title>
+<meta name="description" content="An explosion in Godot 4 in one script and three small shaders: flash, fireball, smoke, dust ring and debris, how the timing works, variations for grenades, fuel and magic, and where particles run out. Tested on Godot 4.4.1 and 4.7.2.">
+<link rel="canonical" href="https://kai777123.github.io/gennai-vfx/explosion-effect-godot-4.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to make an explosion effect in Godot 4">
+<meta property="og:description" content="An explosion in Godot 4 in one script and three small shaders: flash, fireball, smoke, dust ring and debris, how the timing works, variations for grenades, fuel and magic, and where particles run out. Tested on Godot 4.4.1 and 4.7.2.">
+<meta property="og:url" content="https://kai777123.github.io/gennai-vfx/explosion-effect-godot-4.html">
+<meta property="og:image" content="https://kai777123.github.io/gennai-vfx/img/diy_explosion_godot4.png">
+<style>
+:root{--bg:#fff;--fg:#1c1c20;--muted:#5b5b66;--link:#0b5cd5;--line:#d9d9e0;--head:#f2f2f6;--code:#f5f5f8}
+@media (prefers-color-scheme:dark){:root{--bg:#16161a;--fg:#e8e8ee;--muted:#a0a0ad;--link:#7db2ff;--line:#34343c;--head:#22222a;--code:#1f1f26}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:46rem;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.9rem;line-height:1.25;margin:0 0 .4em}
+h2{font-size:1.35rem;margin:2em 0 .5em}
+p{margin:.6em 0}
+a{color:var(--link)}
+img{max-width:100%;height:auto;display:block;border-radius:6px}
+figure{margin:1.2em 0}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:.4em}
+pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px 14px;overflow-x:auto;font-size:.88rem;line-height:1.45}
+code{font-family:ui-monospace,Consolas,"SF Mono",monospace}
+p code{background:var(--code);padding:1px 4px;border-radius:3px;font-size:.9em}
+.t{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{background:var(--head)}
+.meta{color:var(--muted);font-size:.9rem;margin:0 0 1.5em}
+footer{margin-top:2.5em;color:var(--muted);border-top:1px solid var(--line);padding-top:1em}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "TechArticle",
+ "headline": "How to make an explosion effect in Godot 4",
+ "description": "An explosion in Godot 4 in one script and three small shaders: flash, fireball, smoke, dust ring and debris, how the timing works, variations for grenades, fuel and magic, and where particles run out. Tested on Godot 4.4.1 and 4.7.2.",
+ "url": "https://kai777123.github.io/gennai-vfx/explosion-effect-godot-4.html",
+ "image": "https://kai777123.github.io/gennai-vfx/img/diy_explosion_godot4.png",
+ "datePublished": "2026-11-06",
+ "dateModified": "2026-11-06",
+ "author": {"@type": "Person", "name": "gennai", "url": "https://gennai.itch.io/"},
+ "proficiencyLevel": "Beginner",
+ "dependencies": "Godot 4.4 or newer",
+ "mentions": {"@type": "Product", "name": "Explosion VFX for Godot 4", "url": "https://gennai.itch.io/explosion-vfx-godot-4", "brand": {"@type": "Brand", "name": "gennai"}}
+}
+</script>
+</head>
+<body>
+<main>
+<p class="meta"><a href="./">Godot 4 VFX Packs by gennai</a> › Guides</p>
+<h1>How to make an explosion effect in Godot 4</h1>
+<p class="meta">Updated 2026-11-06. Tested on Godot 4.4.1 and 4.7.2, Forward+, Mobile and Compatibility.</p>
+
+<p>Short version: an explosion is five layers that start at the same moment and end at different times. A flash of light that is gone in a tenth of a second, a fireball that burns from white to soot in under a second, smoke that keeps rising for three, a ring of dust pushed over the floor, and debris that falls back down. Each layer on its own looks like nothing much. It's the timing between them that makes it read as a blast. Below is all of it in one script and three short shaders, then how to change it for other kinds of explosion, and where this approach runs out. The pack I sell is at the end.</p>
+
+<figure>
+<img src="img/diy_explosion_godot4.gif" alt="An explosion made with GPUParticles3D and three small shaders in Godot 4: flash, fireball, dust ring, smoke and debris next to a crate and a capsule" width="640" height="360">
+<figcaption>What the code below gives you on Godot 4.7.2, Forward+, with glow on in the WorldEnvironment. The crate is 1 m and the capsule is 1.8 m.</figcaption>
+</figure>
+
+<h2>The five layers</h2>
+<figure>
+<img src="img/diy_explosion_layers.png" alt="The five layers of the explosion played one at a time: flash, fireball, smoke, dust ring and debris" loading="lazy">
+<figcaption>The same explosion with one layer switched on at a time: flash, fireball, smoke, ring, debris.</figcaption>
+</figure>
+<div class="t"><table>
+<thead><tr><th>Layer</th><th>Time</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td>Flash</td><td>0.08 s</td><td>An <code>OmniLight3D</code> at high energy that drops to 0. It lights the floor and the props around the blast for a few frames, which sells the size more than the fireball does.</td></tr>
+<tr><td>Fireball</td><td>0.9 s</td><td>18 camera-facing puffs flying out in every direction. Each puff is a noisy blob with a hot middle, and it burns away from the edge as it ages, white to yellow to orange to soot.</td></tr>
+<tr><td>Smoke</td><td>starts at 0.12 s, lasts 2.8 s</td><td>Dark puffs that start a little after the fire, rise slowly, keep growing and thin out. Starting them late leaves the fireball alone in the first frames.</td></tr>
+<tr><td>Dust ring</td><td>0.6 s, 4.0 m</td><td>A flat plane on the floor with a broken band of dust that races out fast and slows down. Without it the blast floats above the ground.</td></tr>
+<tr><td>Debris</td><td>1.3 s</td><td>Small dark boxes thrown up and out with gravity. They are what is still moving after the fire is gone.</td></tr>
+</tbody>
+</table></div>
+
+<h2>The code</h2>
+<p>Make a folder with these four files, add a <code>Node3D</code> to a scene, attach <code>explosion.gd</code> and run it. With <code>autoplay</code> on it goes off every two seconds. Call <code>explode()</code> from your own code to set one off, and <code>explode("smoke")</code> plays one layer, which is how the strip above was made. There are no textures: every soft shape is noise computed in the shader. I ran it on Godot 4.4.1 and 4.7.2 on Forward+, Mobile and Compatibility, and all six logs had zero errors and zero warnings. Turn on glow in your WorldEnvironment. The middle of the fireball is drawn brighter than 1 so that it blooms.</p>
+<p><code>explosion.gd</code></p>
+<pre><code>extends Node3D
+# One explosion = five layers, in order of appearance. All times in seconds.
+const FLASH_TIME := 0.08      # 1 white light, gone almost at once
+const FIREBALL_LIFE := 0.9    # 2 fireball: white &gt; yellow &gt; orange &gt; dark red
+const SMOKE_DELAY := 0.12     # 3 smoke starts after the fireball
+const SMOKE_LIFE := 2.8
+const RING_TIME := 0.6        # 4 shock ring on the floor
+const RING_RADIUS := 4.0
+const DEBRIS_LIFE := 1.3      # 5 debris, falls with gravity
+const AUTOPLAY_INTERVAL := 2.0
+
+@export var autoplay := true
+var _fire_mat: ShaderMaterial
+var _smoke_mat: ShaderMaterial
+var _debris_mat := StandardMaterial3D.new()
+
+func _ready() -&gt; void:
+	_fire_mat = ShaderMaterial.new()
+	_fire_mat.shader = load(&quot;res://fireball.gdshader&quot;)
+	_smoke_mat = ShaderMaterial.new()
+	_smoke_mat.shader = load(&quot;res://smoke.gdshader&quot;)
+	_debris_mat.albedo_color = Color(0.12, 0.11, 0.1)
+	if autoplay:
+		var t := Timer.new()
+		t.wait_time = AUTOPLAY_INTERVAL
+		t.autostart = true
+		t.timeout.connect(explode)
+		add_child(t)
+		explode()
+
+# only = &quot;&quot; plays everything; &quot;flash&quot;, &quot;fireball&quot;, &quot;smoke&quot;, &quot;ring&quot;, &quot;debris&quot; play one layer.
+func explode(only := &quot;&quot;) -&gt; void:
+	if only == &quot;&quot; or only == &quot;flash&quot;: _flash()
+	if only == &quot;&quot; or only == &quot;fireball&quot;:
+		_burst(_quad(), _fire_mat, 18, FIREBALL_LIFE, 0.0, 1.0, 2.6, 180.0, 0.6, 0.5, 1.4, 2.4)
+	if only == &quot;&quot; or only == &quot;smoke&quot;:
+		_burst(_quad(), _smoke_mat, 22, SMOKE_LIFE, SMOKE_DELAY, 0.6, 1.6, 45.0, 0.5, 0.7, 1.4, 2.4)
+	if only == &quot;&quot; or only == &quot;ring&quot;: _ring()
+	if only == &quot;&quot; or only == &quot;debris&quot;:
+		_burst(BoxMesh.new(), _debris_mat, 28, DEBRIS_LIFE, 0.0, 5.0, 9.0, 55.0, -9.8, 0.2, 0.04, 0.1)
+
+func _quad() -&gt; QuadMesh:
+	var q := QuadMesh.new()
+	q.size = Vector2.ONE
+	return q
+
+func _flash() -&gt; void:
+	var l := OmniLight3D.new()
+	l.light_color = Color(1.0, 0.9, 0.7)
+	l.light_energy = 25.0
+	l.omni_range = 9.0
+	l.position.y = 1.0
+	add_child(l)
+	var tw := create_tween()
+	tw.tween_property(l, &quot;light_energy&quot;, 0.0, FLASH_TIME)
+	tw.tween_callback(l.queue_free)
+
+# Spawns a one-shot GPUParticles3D, frees it when done (so bursts can overlap).
+func _burst(mesh: Mesh, mat: Material, n: int, life: float, delay: float, v_min: float, v_max: float,
+		spread: float, gravity_y: float, radius: float, s_min: float, s_max: float) -&gt; void:
+	var pm := ParticleProcessMaterial.new()
+	pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
+	pm.emission_sphere_radius = radius
+	pm.direction = Vector3.UP
+	pm.spread = spread
+	pm.initial_velocity_min = v_min
+	pm.initial_velocity_max = v_max
+	pm.gravity = Vector3(0, gravity_y, 0)
+	pm.scale_min = s_min
+	pm.scale_max = s_max
+	mesh.material = mat
+	var p := GPUParticles3D.new()
+	p.amount = n
+	p.lifetime = life
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.process_material = pm
+	p.draw_pass_1 = mesh
+	p.visibility_aabb = AABB(Vector3(-8, -2, -8), Vector3(16, 12, 16))
+	p.emitting = false
+	p.position.y = 0.5 + radius   # keep the quads above the floor
+	add_child(p)
+	if delay &gt; 0.0:
+		await get_tree().create_timer(delay).timeout
+	p.emitting = true
+	get_tree().create_timer(delay + life + 0.3).timeout.connect(p.queue_free)
+
+func _ring() -&gt; void:
+	var m := PlaneMesh.new()
+	m.size = Vector2(RING_RADIUS * 2.0, RING_RADIUS * 2.0)
+	var mat := ShaderMaterial.new()
+	mat.shader = load(&quot;res://ring.gdshader&quot;)
+	m.material = mat
+	var r := MeshInstance3D.new()
+	r.mesh = m
+	r.position.y = 0.03
+	add_child(r)
+	var tw := create_tween()
+	tw.tween_method(func(v: float): mat.set_shader_parameter(&quot;progress&quot;, v), 0.0, 1.0, RING_TIME)
+	tw.tween_callback(r.queue_free)</code></pre>
+<p><code>fireball.gdshader</code></p>
+<pre><code>shader_type spatial;
+render_mode blend_mix, unshaded, depth_draw_never, cull_disabled;
+// One puff of the fireball. Each puff is a noisy blob that burns from the edge in:
+// hot yellow in the middle, orange, then a sooty edge that eats the puff as it ages.
+uniform float glow = 2.5;
+varying float v_life;
+varying float v_seed;
+
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p) {
+	vec2 i = floor(p), f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
+}
+
+void vertex() {
+	v_life = INSTANCE_CUSTOM.y;          // 0 at birth, 1 at death
+	v_seed = fract(float(INSTANCE_ID) * 0.618034); // different noise per particle
+	VERTEX.xy *= length(MODEL_MATRIX[0].xyz) * (0.4 + 0.9 * sqrt(v_life)); // swells fast, then slows
+	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0], INV_VIEW_MATRIX[1], INV_VIEW_MATRIX[2], MODEL_MATRIX[3]);
+}
+
+void fragment() {
+	vec2 uv = UV - 0.5;
+	float d = length(uv) * 2.0;
+	vec2 q = uv * 3.0 + v_seed * 17.0 + vec2(0.0, -v_life * 1.5);
+	float n = noise(q) * 0.6 + noise(q * 2.3) * 0.4;
+	float heat = (1.0 - d) * 1.3 + (n - 0.5) * 0.9 - v_life * 1.1;   // what is left of the puff
+	vec3 c = mix(vec3(0.08, 0.05, 0.04), vec3(0.9, 0.25, 0.04), smoothstep(0.0, 0.25, heat)); // soot -&gt; orange
+	c = mix(c, vec3(1.0, 0.75, 0.25), smoothstep(0.25, 0.55, heat));                     // -&gt; yellow
+	c = mix(c, vec3(1.0, 0.97, 0.85), smoothstep(0.6, 0.9, heat));                       // -&gt; white core
+	ALBEDO = c * mix(1.0, glow, smoothstep(0.2, 0.7, heat));
+	ALPHA = smoothstep(-0.15, 0.05, heat) * (1.0 - smoothstep(0.85, 1.0, v_life));
+}</code></pre>
+<p><code>smoke.gdshader</code></p>
+<pre><code>shader_type spatial;
+render_mode blend_mix, unshaded, depth_draw_never, cull_disabled;
+// One puff of smoke: lit warm from below at first, then dark grey, thinning out from the edge.
+varying float v_life;
+varying float v_seed;
+
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p) {
+	vec2 i = floor(p), f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
+}
+
+void vertex() {
+	v_life = INSTANCE_CUSTOM.y;
+	v_seed = fract(float(INSTANCE_ID) * 0.618034);
+	VERTEX.xy *= length(MODEL_MATRIX[0].xyz) * (0.6 + v_life * 1.2); // keeps growing as it rises
+	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0], INV_VIEW_MATRIX[1], INV_VIEW_MATRIX[2], MODEL_MATRIX[3]);
+}
+
+void fragment() {
+	vec2 uv = UV - 0.5;
+	float d = length(uv) * 2.0;
+	vec2 q = uv * 2.5 + v_seed * 23.0 + vec2(0.0, -v_life * 0.8);
+	float n = noise(q) * 0.6 + noise(q * 2.1) * 0.4;
+	float body = (1.0 - d) + (n - 0.5) * 0.8 - v_life * 0.7;
+	vec3 c = mix(vec3(0.45, 0.22, 0.1), vec3(0.09, 0.085, 0.08), smoothstep(0.0, 0.35, v_life));
+	ALBEDO = c * (0.8 + 0.4 * n);
+	ALPHA = smoothstep(0.0, 0.35, body) * 0.85 * smoothstep(0.0, 0.08, v_life);
+}</code></pre>
+<p><code>ring.gdshader</code></p>
+<pre><code>shader_type spatial;
+render_mode blend_mix, unshaded, depth_draw_never, cull_disabled;
+// The dust ring the blast pushes over the floor: a soft, broken band that races out and fades.
+uniform float progress = 0.0;   // 0 -&gt; 1 over RING_TIME
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p) {
+	vec2 i = floor(p), f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
+}
+void fragment() {
+	vec2 p = (UV - 0.5) * 2.0;
+	float r = length(p);
+	float front = 0.15 + 0.75 * (1.0 - pow(1.0 - progress, 3.0)); // fast, then slows down
+	float band = smoothstep(front - 0.18, front - 0.02, r) * (1.0 - smoothstep(front - 0.02, front + 0.03, r));
+	float broken = noise(p * 5.0 + progress * 2.0) * 0.6 + noise(p * 11.0) * 0.4;
+	ALBEDO = vec3(0.42, 0.36, 0.3);
+	ALPHA = band * smoothstep(0.2, 0.75, broken) * (1.0 - progress) * 0.9;
+}</code></pre>
+
+<h2>Why the fireball doesn't look like a glowing ball</h2>
+<p>My first try drew the fireball with additive blending, like a campfire. Twenty puffs added on top of each other turn into one flat white disc. The version above uses normal alpha blending instead. Now the dark soot on the edge of one puff covers the bright middle of the puff behind it. That overlap is what makes the shape look lumpy and solid.</p>
+<p>The other half is the <code>heat</code> value in <code>fireball.gdshader</code>. It's the distance from the centre of the puff, plus some noise, minus the age. The colour comes from heat, and the puff is cut away where heat drops below zero. As the puff gets older the cut moves inward through the noise and it burns away in ragged pieces instead of fading evenly.</p>
+
+<h2>Other kinds of explosion</h2>
+<p>A grenade is this one at half size: <code>RING_RADIUS</code> 2.5, fireball scale 0.8 to 1.4, and fewer, faster debris. A fuel or barrel explosion wants a taller fireball and more of it: raise the upward velocity, set the fireball gravity to <code>2.0</code> so the puffs keep climbing, and make <code>FIREBALL_LIFE</code> 1.4. A magic or plasma blast keeps the timing and changes the colours in the shader, for example a white core, cyan, then deep blue instead of soot, with smoke that is pale and short. A dust or concrete impact drops the fireball and keeps flash, ring, a lot of grey smoke and debris.</p>
+
+<h2>Where this stops being enough</h2>
+<p>This covers an explosion that plays in empty space. Here's where I'd stop using it.</p>
+<p>Nothing around it reacts. Real explosions push crates, scorch the side of a wall that faced the blast, knock a character back and leave a crater. All of that means finding the meshes in range and changing their materials, transforms or geometry from the same start time. The particles above don't know anything is there.</p>
+<p>On Compatibility (which is also what Web exports use) the particles can't fade where they cross the floor, because there is no depth texture to compare with. The dust ring sits on its own plane for that reason. Smoke puffs that sink into the floor will show a hard line.</p>
+<p>GPU particles aren't deterministic, so two explosions are never exactly the same and you can't pause one halfway or scrub it. For a cutscene or a replay that matters.</p>
+<p>And one explosion type is easy. Twenty that look different at a glance, each with its fire, smoke, shockwave and debris balanced, plus craters and scorch marks that stay, is most of the work.</p>
+
+<h2>Or drop in a preset</h2>
+<p>The pack I sell for this is <a href="https://gennai.itch.io/explosion-vfx-godot-4?utm_source=github_pages&amp;utm_medium=guide&amp;utm_campaign=explosion">Explosion VFX for Godot 4</a>. You place one blast node and everything in range reacts: crates buckle and scorch, the close ones break into boards, a figure staggers, and the floor keeps a crater. There are 20 explosion types and 112 presets in 3D and 2D, with shockwaves, craters, smoke columns, debris, clusters and flak. It's all code and shaders, it runs on Compatibility and in Web exports, and you can try every scene in your browser on the itch page.</p>
+<figure>
+<img src="img/blastlux_everything_reacts.gif" alt="Explosion VFX for Godot 4: one blast node makes the crates, barrels and a figure in range react" loading="lazy">
+<figcaption>One blast node. The crates, barrels and the figure in range react to it on their own.</figcaption>
+</figure>
+<p>There's a free shockwave node on the same page under Download demo, and the free versions of all my packs are on <a href="https://github.com/kai777123/godot-4-free-vfx/tree/main/explosion">GitHub</a> under MIT.</p>
+
+<footer>
+<p>More guides and the full list of packs: <a href="./">Godot 4 VFX Packs by gennai</a>. The free versions of every pack are on <a href="https://github.com/kai777123/godot-4-free-vfx">GitHub</a> under the MIT license.</p>
+</footer>
+</main>
+</body>
+</html>

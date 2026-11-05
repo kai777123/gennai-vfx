@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-439CSY86RJ"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-439CSY86RJ');</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to make a hit flash and blood effect in Godot 4</title>
+<meta name="description" content="A white hit flash, a squash and a blood spray in Godot 4, in 3D and 2D, with the shader and the timing that makes it feel like an impact, variations, and where it runs out. Tested on Godot 4.4.1 and 4.7.2.">
+<link rel="canonical" href="https://kai777123.github.io/gennai-vfx/hit-flash-godot-4.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to make a hit flash and blood effect in Godot 4">
+<meta property="og:description" content="A white hit flash, a squash and a blood spray in Godot 4, in 3D and 2D, with the shader and the timing that makes it feel like an impact, variations, and where it runs out. Tested on Godot 4.4.1 and 4.7.2.">
+<meta property="og:url" content="https://kai777123.github.io/gennai-vfx/hit-flash-godot-4.html">
+<meta property="og:image" content="https://kai777123.github.io/gennai-vfx/img/diy_hit_flash_godot4.png">
+<style>
+:root{--bg:#fff;--fg:#1c1c20;--muted:#5b5b66;--link:#0b5cd5;--line:#d9d9e0;--head:#f2f2f6;--code:#f5f5f8}
+@media (prefers-color-scheme:dark){:root{--bg:#16161a;--fg:#e8e8ee;--muted:#a0a0ad;--link:#7db2ff;--line:#34343c;--head:#22222a;--code:#1f1f26}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:46rem;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.9rem;line-height:1.25;margin:0 0 .4em}
+h2{font-size:1.35rem;margin:2em 0 .5em}
+p{margin:.6em 0}
+a{color:var(--link)}
+img{max-width:100%;height:auto;display:block;border-radius:6px}
+figure{margin:1.2em 0}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:.4em}
+pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px 14px;overflow-x:auto;font-size:.88rem;line-height:1.45}
+code{font-family:ui-monospace,Consolas,"SF Mono",monospace}
+p code{background:var(--code);padding:1px 4px;border-radius:3px;font-size:.9em}
+.t{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{background:var(--head)}
+.meta{color:var(--muted);font-size:.9rem;margin:0 0 1.5em}
+footer{margin-top:2.5em;color:var(--muted);border-top:1px solid var(--line);padding-top:1em}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "TechArticle",
+ "headline": "How to make a hit flash and blood effect in Godot 4",
+ "description": "A white hit flash, a squash and a blood spray in Godot 4, in 3D and 2D, with the shader and the timing that makes it feel like an impact, variations, and where it runs out. Tested on Godot 4.4.1 and 4.7.2.",
+ "url": "https://kai777123.github.io/gennai-vfx/hit-flash-godot-4.html",
+ "image": "https://kai777123.github.io/gennai-vfx/img/diy_hit_flash_godot4.png",
+ "datePublished": "2026-11-06",
+ "dateModified": "2026-11-06",
+ "author": {"@type": "Person", "name": "gennai", "url": "https://gennai.itch.io/"},
+ "proficiencyLevel": "Beginner",
+ "dependencies": "Godot 4.4 or newer",
+ "mentions": {"@type": "Product", "name": "Blood & Hit VFX for Godot 4", "url": "https://gennai.itch.io/blood-hit-vfx-godot-4", "brand": {"@type": "Brand", "name": "gennai"}}
+}
+</script>
+</head>
+<body>
+<main>
+<p class="meta"><a href="./">Godot 4 VFX Packs by gennai</a> › Guides</p>
+<h1>How to make a hit flash and blood effect in Godot 4</h1>
+<p class="meta">Updated 2026-11-06. Tested on Godot 4.4.1 and 4.7.2, Forward+, Mobile and Compatibility, in 3D and 2D.</p>
+
+<p>Short version: when something takes a hit, three things happen inside about a tenth of a second. It flashes white, it squashes and springs back, and something sprays out the far side. The white flash is a shader with one <code>flash</code> uniform that you tween from 1 to 0. The squash is a tween on the scale. The blood is a one-shot particle burst. Below are the 3D and 2D versions, each one short script plus a few lines of shader, then the timing that makes it feel like an impact, and where it runs out.</p>
+
+<figure>
+<img src="img/diy_hit_flash_godot4.gif" alt="A capsule in Godot 4 flashing white and spraying dark red drops when it is hit" width="640" height="360">
+<figcaption>The 3D version on Godot 4.7.2, Forward+. It gets hit once a second, from alternating sides.</figcaption>
+</figure>
+
+<h2>The 3D version</h2>
+<p>Put <code>hit.gd</code> on the <code>MeshInstance3D</code> that gets hit and keep <code>hit_flash.gdshader</code> next to it. The script replaces the mesh's material with the flash shader. Set the base colour in the shader's <code>albedo</code> uniform. Call <code>hit(direction)</code> with the way the blow travels. With <code>autoplay</code> on it hits itself from alternating sides every second. I ran it on Godot 4.4.1 and 4.7.2 on all three renderers with zero errors and zero warnings.</p>
+<p><code>hit_flash.gdshader</code></p>
+<pre><code>shader_type spatial;
+uniform vec4 albedo : source_color = vec4(0.75, 0.6, 0.5, 1.0);
+uniform float flash : hint_range(0.0, 1.0) = 0.0; // 0 = normal colour, 1 = pure white
+
+void fragment() {
+	ALBEDO = mix(albedo.rgb, vec3(1.0), flash);
+	EMISSION = vec3(flash); // stays white even in shadow
+}</code></pre>
+<p><code>hit.gd</code></p>
+<pre><code>extends MeshInstance3D
+# Put this on the MeshInstance3D that takes the hit. hit(from_dir): from_dir = the way the blow travels.
+const FLASH_TIME := 0.12     # white -&gt; normal colour
+const SQUASH_TIME := 0.1     # squash and spring back (half each way)
+const SQUASH_AMOUNT := 0.2
+const BLOOD_LIFE := 0.5
+const AUTOPLAY_INTERVAL := 1.0
+
+@export var autoplay := true
+var _mat := ShaderMaterial.new()
+var _base_scale: Vector3
+var _side := 1.0
+
+func _ready() -&gt; void:
+	_mat.shader = load(&quot;res://hit_flash.gdshader&quot;)
+	material_override = _mat
+	_base_scale = scale
+	if autoplay:
+		var t := Timer.new()
+		t.wait_time = AUTOPLAY_INTERVAL
+		t.autostart = true
+		t.timeout.connect(func():
+			hit(Vector3(_side, 0, 0))   # left, right, left, ...
+			_side = -_side)
+		add_child(t)
+
+func hit(from_dir: Vector3) -&gt; void:
+	_mat.set_shader_parameter(&quot;flash&quot;, 1.0)
+	create_tween().tween_property(_mat, &quot;shader_parameter/flash&quot;, 0.0, FLASH_TIME)
+	var d := from_dir.normalized().abs()   # squash along the blow, bulge sideways
+	var squashed := _base_scale * (Vector3.ONE - d * SQUASH_AMOUNT + (Vector3.ONE - d) * SQUASH_AMOUNT * 0.5)
+	var tw := create_tween()
+	tw.tween_property(self, &quot;scale&quot;, squashed, SQUASH_TIME * 0.5)
+	tw.tween_property(self, &quot;scale&quot;, _base_scale, SQUASH_TIME * 0.5)
+	_blood(from_dir.normalized())
+
+func _blood(dir: Vector3) -&gt; void:
+	var pm := ParticleProcessMaterial.new()
+	pm.direction = dir + Vector3.UP * 0.5
+	pm.spread = 40.0
+	pm.initial_velocity_min = 1.5
+	pm.initial_velocity_max = 6.0
+	pm.gravity = Vector3(0, -9.8, 0)
+	pm.scale_min = 0.4
+	pm.scale_max = 1.3
+	pm.particle_flag_align_y = true          # each drop stretches along its flight
+	var m := CapsuleMesh.new()
+	m.radius = 0.018
+	m.height = 0.11
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.45, 0.02, 0.03)
+	m.material = mat
+	var p := GPUParticles3D.new()
+	p.amount = 60
+	p.lifetime = BLOOD_LIFE
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.process_material = pm
+	p.draw_pass_1 = m
+	p.visibility_aabb = AABB(Vector3(-4, -3, -4), Vector3(8, 6, 8))
+	get_parent().add_child(p)
+	p.global_position = global_position + dir * 0.3 + Vector3.UP * 0.2   # comes out the far side
+	p.emitting = true
+	get_tree().create_timer(BLOOD_LIFE + 0.3).timeout.connect(p.queue_free)</code></pre>
+
+<h2>The 2D version</h2>
+<p>Same idea on a <code>Sprite2D</code>. The shader keeps the sprite's own texture and alpha and mixes the colour toward white. The blood is a <code>CPUParticles2D</code>, which is plenty for 24 dots.</p>
+<figure>
+<img src="img/diy_hit_flash_2d.gif" alt="The Godot icon as a Sprite2D flashing white, squashing and spraying red dots when hit" width="480" height="270" loading="lazy">
+<figcaption>The 2D version on the default Godot icon.</figcaption>
+</figure>
+<p><code>hit_flash_2d.gdshader</code></p>
+<pre><code>shader_type canvas_item;
+uniform float flash : hint_range(0.0, 1.0) = 0.0; // 0 = normal colour, 1 = pure white
+
+void fragment() {
+	vec4 c = texture(TEXTURE, UV);
+	COLOR = vec4(mix(c.rgb, vec3(1.0), flash), c.a);
+}</code></pre>
+<p><code>hit_2d.gd</code></p>
+<pre><code>extends Sprite2D
+# Put this on the Sprite2D that takes the hit. hit(from_dir): from_dir = the way the blow travels.
+const FLASH_TIME := 0.12
+const SQUASH_TIME := 0.1
+const AUTOPLAY_INTERVAL := 1.0
+@export var autoplay := true
+var _mat := ShaderMaterial.new()
+var _base_scale: Vector2
+var _side := 1.0
+
+func _ready() -&gt; void:
+	_mat.shader = load(&quot;res://hit_flash_2d.gdshader&quot;)
+	material = _mat
+	_base_scale = scale
+	if autoplay:
+		var t := Timer.new()
+		t.wait_time = AUTOPLAY_INTERVAL
+		t.autostart = true
+		t.timeout.connect(func(): hit(Vector2(_side, 0)); _side = -_side)
+		add_child(t)
+
+func hit(from_dir: Vector2) -&gt; void:
+	_mat.set_shader_parameter(&quot;flash&quot;, 1.0)
+	create_tween().tween_property(_mat, &quot;shader_parameter/flash&quot;, 0.0, FLASH_TIME)
+	var tw := create_tween()
+	tw.tween_property(self, &quot;scale&quot;, _base_scale * Vector2(0.8, 1.1), SQUASH_TIME * 0.5)
+	tw.tween_property(self, &quot;scale&quot;, _base_scale, SQUASH_TIME * 0.5)
+	var b := CPUParticles2D.new()   # blood: dark red dots, gravity, 0.5 s
+	b.amount = 24; b.lifetime = 0.5; b.one_shot = true; b.explosiveness = 1.0
+	b.direction = from_dir + Vector2.UP * 0.5; b.spread = 30.0
+	b.initial_velocity_min = 160.0; b.initial_velocity_max = 320.0
+	b.gravity = Vector2(0, 700); b.scale_amount_min = 5.0; b.scale_amount_max = 9.0
+	b.color = Color(0.45, 0.02, 0.03); b.position = position + from_dir * 50.0
+	get_parent().add_child(b)
+	b.emitting = true
+	get_tree().create_timer(0.8).timeout.connect(b.queue_free)</code></pre>
+
+<h2>Why the timing matters</h2>
+<div class="t"><table>
+<thead><tr><th>Part</th><th>Time</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>White flash</td><td>0.12 s</td><td>Long enough to see at 60 fps (about seven frames), short enough to read as a hit and not a power-up. It's full white on the first frame. A flash that fades in feels late.</td></tr>
+<tr><td>Squash</td><td>0.1 s, 0.2</td><td>The body gets thinner along the blow and wider across it, then springs back. You barely notice it on its own, but without it the flash looks like a light switching on.</td></tr>
+<tr><td>Blood</td><td>0.5 s</td><td>60 thin drops leave the far side of the body in the direction of the blow and fall with gravity. Each drop is a capsule stretched along its own velocity (<code>particle_flag_align_y</code>). I tried round drops first and they read as a clump of dots.</td></tr>
+</tbody>
+</table></div>
+<p>The flash shader also writes the flash into <code>EMISSION</code>. Without that, a character standing in shadow flashes grey instead of white.</p>
+
+<h2>Variations</h2>
+<p>A red flash instead of white is the <code>vec3(1.0)</code> in the shader changed to <code>vec3(1.0, 0.2, 0.2)</code>. For a robot or a bloodless game, make the drops pale yellow, raise the velocity and cut the life to 0.3 s, and you have sparks. A critical hit is a longer flash (0.2 s), a bigger squash and twice the drops. Hit-stop, where the whole game freezes for a few frames on impact, goes in the code that calls <code>hit()</code>, not in the effect.</p>
+
+<h2>Where this stops being enough</h2>
+<p>The hit leaves nothing behind. In most action games the wound stays where the blow landed, follows the character as it walks, and bleeds down the body. That means working out where on the mesh the hit landed and drawing on the mesh itself, and on a skinned character the mark has to move with the bones.</p>
+<p>The drops fall through the floor. Making them splat where they land and stay as stains means either physics on every drop or a known floor height and wall planes to test against.</p>
+<p>The flash shader replaces the material. A real character has its own material with textures. You'd put the flash in a <code>next_pass</code> shader on top of it, or add the uniform to the character's own shader.</p>
+
+<h2>Or drop in a preset</h2>
+<p>The pack I sell for this is <a href="https://gennai.itch.io/blood-hit-vfx-godot-4?utm_source=github_pages&amp;utm_medium=guide&amp;utm_campaign=hit">Blood &amp; Hit VFX for Godot 4</a>. You hit a character and the wound stays where the blow landed: it rides on the skinned body as it walks, bleeds down the skin, drips and pools on the floor, and the spray sticks to the floor and walls. There are 47 presets in 3D and 2D, ten kinds of wound, a one-line bloodless switch, and a hit flash. It runs on Compatibility and in Web exports, and there's a browser demo on the itch page.</p>
+<figure>
+<img src="img/vulnalux_sword_cut.gif" alt="Blood and Hit VFX for Godot 4: a sword cut that stays on a walking figure and bleeds" loading="lazy">
+<figcaption>A sword cut that stays on the figure as it walks.</figcaption>
+</figure>
+<p>The free versions of all my packs are on <a href="https://github.com/kai777123/godot-4-free-vfx/tree/main/blood">GitHub</a> under MIT.</p>
+
+<footer>
+<p>More guides and the full list of packs: <a href="./">Godot 4 VFX Packs by gennai</a>. The free versions of every pack are on <a href="https://github.com/kai777123/godot-4-free-vfx">GitHub</a> under the MIT license.</p>
+</footer>
+</main>
+</body>
+</html>

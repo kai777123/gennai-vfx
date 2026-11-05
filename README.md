@@ -131,6 +131,8 @@ The free versions of thirteen packs are also on GitHub under the MIT license: ht
 [How to make a lightning effect in Godot 4](https://kai777123.github.io/gennai-vfx/lightning-effect-godot-4.html). A bolt in about 80 lines: midpoint displacement, camera-facing ribbons, branches, and the pack.
 [How to make a freeze and frost effect in Godot 4](https://kai777123.github.io/gennai-vfx/ice-effect-godot-4.html). Frost over any mesh with a next_pass shader in about 75 lines, an ice shell, thawing, and the pack.
 [How to make rain in Godot 4](https://kai777123.github.io/gennai-vfx/rain-effect-godot-4.html). Rain that follows the camera in about 40 lines, snow and fog, shelter and splashes, and the pack.
+[How to make an explosion effect in Godot 4](https://kai777123.github.io/gennai-vfx/explosion-effect-godot-4.html). Flash, fireball, smoke, dust ring and debris in one script and three small shaders, the timing, variations, and the pack.
+[How to make a hit flash and blood effect in Godot 4](https://kai777123.github.io/gennai-vfx/hit-flash-godot-4.html). A white hit flash, a squash and a blood spray in 3D and 2D, the timing that sells the impact, and the pack.
 [How to make a sword trail and slash effect in Godot 4](https://kai777123.github.io/gennai-vfx/sword-trail-godot-4.html). A fading ribbon from the blade's base and tip in about 45 lines, smoothing, slashes and hits, and the pack.
 [Best Godot 4 VFX packs in 2026 (free and paid)](https://kai777123.github.io/gennai-vfx/best-godot-4-vfx-packs.html). 23 packs from 12 authors compared by use: price, 2D or 3D, Godot version, free versions and browser demos. Mine are in the list, said up front.
 
