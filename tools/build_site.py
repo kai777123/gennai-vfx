@@ -5,7 +5,7 @@ Facts come from the catalog (live packs only), pack.json (preset counts, Godot
 versions, renderers) and the READMEs (sprite packs). Nothing is guessed: a value
 that cannot be read is left out and printed as MISSING.
 """
-import json, re, html
+import json, re, html, importlib.util
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]      # C:\gennai
@@ -40,6 +40,9 @@ TITLE_OVERRIDE = {"fx2": "Pixel Art Laser Beam & Lightning VFX (ARCBIT)"}
 SPRITE_README = {"fx2": "fx2/docs/README_full.md",
                  "px_explosion": "px_explosion/pack/full/ARCBIT_Explosion/README.md"}
 missing = []
+_spec = importlib.util.spec_from_file_location('vfx_pages', Path(__file__).with_name('vfx_pages.py'))
+vfx = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(vfx)
 
 
 def read_use_texts():
@@ -166,6 +169,7 @@ def faq(packs):
 
 def build():
     cat, packs = load()
+    live_fx = vfx.build(cat, missing)
     ngod = sum(1 for p in packs if not p["sprite"])
     nspr = len(packs) - ngod
     intro = (f"I make VFX packs for Godot 4 and sell them on itch.io. {ngod} of them are made entirely in code, "
@@ -200,6 +204,7 @@ def build():
         secs += f'<section><h3 id="{e(p["slug"])}">{e(p["name"])}</h3>{lines}</section>\n'
     faqh = "".join(f"<h3>{e(a)}</h3><p>{e(b)}</p>\n" for a, b in q)
     guides = "".join(f'<p><a href="{e(f)}">{e(t)}</a>. {e(d)}</p>\n' for f, t, d in GUIDES)
+    tryfx = "".join(f'<p><a href="vfx/{e(x["file"])}.html">{e(x["h1"])}</a>. {e(x["short"])}</p>\n' for x in live_fx)
     page = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -249,7 +254,9 @@ footer{{margin-top:2.5em;color:var(--muted)}}
 {secs}<h2>Free samples on GitHub</h2>
 <p>The free versions of thirteen packs are also on GitHub under the MIT license: <a href="https://github.com/kai777123/godot-4-free-vfx">github.com/kai777123/godot-4-free-vfx</a>.</p>
 <h2>Guides</h2>
-{guides}<h2>FAQ</h2>
+{guides}<h2>Try the effects in your browser</h2>
+<p>One page per effect, with the code and a demo that runs in the page. <a href="vfx/">All effects</a>.</p>
+{tryfx}<h2>FAQ</h2>
 {faqh}<h2>Bundles</h2>
 <p>Bundles and sales are on the author page: <a href="{SHOP}/{UTM}">{SHOP.replace('https://', '')}</a>.</p>
 <footer>
@@ -276,6 +283,7 @@ footer{{margin-top:2.5em;color:var(--muted)}}
         md.append("")
     md += ["## Free samples on GitHub", "", "The free versions of thirteen packs are also on GitHub under the MIT license: https://github.com/kai777123/godot-4-free-vfx.", ""]
     md += ["## Guides", ""] + [f"[{t}]({BASE}{f}). {d}" for f, t, d in GUIDES] + [""]
+    md += ["## Try the effects in your browser", "", f"One page per effect, with the code and a demo that runs in the page: [all effects]({BASE}vfx/)."] + [f"[{x['h1']}]({BASE}vfx/{x['file']}.html). {x['short']}" for x in live_fx] + [""]
     md += ["## FAQ", ""]
     for a, b in q:
         md += [f"### {a}", "", b, ""]
@@ -289,6 +297,8 @@ footer{{margin-top:2.5em;color:var(--muted)}}
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         f"  <url><loc>{BASE}</loc></url>\n"
         + "".join(f"  <url><loc>{BASE}{f}</loc></url>\n" for f, _, _ in GUIDES)
+        + f"  <url><loc>{BASE}vfx/</loc></url>\n"
+        + "".join(f"  <url><loc>{BASE}vfx/{x['file']}.html</loc></url>\n" for x in live_fx)
         + "</urlset>\n", encoding="utf-8", newline="\n")
     (SITE / ".nojekyll").write_text("", encoding="utf-8")
     print(f"built {len(packs)} packs")

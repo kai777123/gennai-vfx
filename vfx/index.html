@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-439CSY86RJ"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-439CSY86RJ');</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Godot 4 VFX you can try in your browser</title>
+<meta name="description" content="7 effects for Godot 4 (fire, explosions, lightning, ice, weather, sword trails, dissolve, status effects), each with the GDScript call and a demo that runs in the page.">
+<link rel="canonical" href="https://kai777123.github.io/gennai-vfx/vfx/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Godot 4 VFX you can try in your browser">
+<meta property="og:description" content="7 effects for Godot 4 (fire, explosions, lightning, ice, weather, sword trails, dissolve, status effects), each with the GDScript call and a demo that runs in the page.">
+<meta property="og:url" content="https://kai777123.github.io/gennai-vfx/vfx/">
+<style>
+:root{--bg:#fff;--fg:#1c1c20;--muted:#5b5b66;--link:#0b5cd5;--line:#d9d9e0;--head:#f2f2f6;--code:#f5f5f8;--btn:#0b5cd5;--btnfg:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#16161a;--fg:#e8e8ee;--muted:#a0a0ad;--link:#7db2ff;--line:#34343c;--head:#22222a;--code:#1f1f26;--btn:#3d7fe0;--btnfg:#fff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:46rem;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.9rem;line-height:1.25;margin:0 0 .4em}
+h2{font-size:1.35rem;margin:2em 0 .5em}
+p{margin:.6em 0}
+a{color:var(--link)}
+img{max-width:100%;height:auto;display:block;border-radius:6px}
+figure{margin:1.2em 0}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:.4em}
+pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px 14px;overflow-x:auto;font-size:.88rem;line-height:1.45}
+code{font-family:ui-monospace,Consolas,"SF Mono",monospace}
+p code{background:var(--code);padding:1px 4px;border-radius:3px;font-size:.9em}
+.t{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{background:var(--head)}
+.meta{color:var(--muted);font-size:.9rem;margin:0 0 1.5em}
+.demo{position:relative;width:100%;aspect-ratio:16/9;background:#101014;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.6rem;padding:12px;text-align:center}
+.demo iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.demo button{font:600 1.05rem system-ui,sans-serif;background:var(--btn);color:var(--btnfg);border:0;border-radius:8px;padding:.8rem 1.4rem;cursor:pointer}
+.demo button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.demo .note{color:#b8b8c4;font-size:.85rem;margin:0;max-width:30rem}
+.cta{border:1px solid var(--line);border-radius:8px;padding:14px 16px;background:var(--head);margin:1.2em 0}
+.cta p{margin:.3em 0}
+ul.list{padding-left:1.2rem}
+ul.list li{margin:.5em 0}
+footer{margin-top:2.5em;color:var(--muted);border-top:1px solid var(--line);padding-top:1em}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "ItemList",
+ "name": "Godot 4 VFX you can try in your browser",
+ "url": "https://kai777123.github.io/gennai-vfx/vfx/",
+ "itemListElement": [
+  {
+   "@type": "ListItem",
+   "position": 1,
+   "url": "https://kai777123.github.io/gennai-vfx/vfx/burn-any-mesh-godot-4.html",
+   "name": "Burn any mesh in Godot 4"
+  },
+  {
+   "@type": "ListItem",
+   "position": 2,
+   "url": "https://kai777123.github.io/gennai-vfx/vfx/blow-up-anything-godot-4.html",
+   "name": "Blow up anything in Godot 4"
+  },
+  {
+   "@type": "ListItem",
+   "position": 3,
+   "url": "https://kai777123.github.io/gennai-vfx/vfx/lightning-bolt-godot-4.html",
+   "name": "Strike lightning between any two points in Godot 4"
+  },
+  {
+   "@type": "ListItem",
+   "position": 4,
+   "url": "https://kai777123.github.io/gennai-vfx/vfx/freeze-and-shatter-godot-4.html",
+   "name": "Freeze and shatter any mesh in Godot 4"
+  },
+  {
+   "@type": "ListItem",
+   "position": 5,
+   "url": "https://kai777123.github.io/gennai-vfx/vfx/rain-and-weather-godot-4.html",
+   "name": "Add rain, snow and storms to a Godot 4 scene"
+  },
+  {
+   "@type": "ListItem",
+   "position": 6,
+   "url": "https://kai777123.github.io/gennai-vfx/vfx/sword-trail-and-slash-godot-4.html",
+   "name": "Add sword trails and slashes to any weapon in Godot 4"
+  },
+  {
+   "@type": "ListItem",
+   "position": 7,
+   "url": "https://kai777123.github.io/gennai-vfx/vfx/dissolve-to-ash-godot-4.html",
+   "name": "Dissolve any mesh to ash or stone in Godot 4"
+  }
+ ]
+}
+</script>
+</head>
+<body>
+<main>
+<p class="meta"><a href="../">Godot 4 VFX Packs by gennai</a> › Try the effects</p>
+<h1>Godot 4 VFX you can try in your browser</h1>
+<p>Each page below is one effect for Godot 4: the call that makes it happen, a GIF, and a button that runs the pack's own demo in the page. Nothing downloads until you press the button. Every pack is made in code, without textures, and is tested on Forward+, Mobile and Compatibility.</p>
+<ul class="list">
+<li><a href="burn-any-mesh-godot-4.html">Burn any mesh in Godot 4</a>. Set a crate, barrel or character on fire from the point it was hit. (PYROLUX)</li>
+<li><a href="blow-up-anything-godot-4.html">Blow up anything in Godot 4</a>. One call detonates a blast and every mesh in range reacts. (BLASTLUX)</li>
+<li><a href="lightning-bolt-godot-4.html">Strike lightning between any two points in Godot 4</a>. Draw a branching bolt, a chain or a laser from code. (ARCFLUX)</li>
+<li><a href="freeze-and-shatter-godot-4.html">Freeze and shatter any mesh in Godot 4</a>. Frost that spreads from the hit point, then thaws or breaks into shards. (GLACILUX)</li>
+<li><a href="rain-and-weather-godot-4.html">Add rain, snow and storms to a Godot 4 scene</a>. Rain that follows the camera, and weather you can blend from code. (NIMBLUX)</li>
+<li><a href="sword-trail-and-slash-godot-4.html">Add sword trails and slashes to any weapon in Godot 4</a>. A trail that follows the blade, slash arcs and hit sparks. (EDGEFLUX)</li>
+<li><a href="dissolve-to-ash-godot-4.html">Dissolve any mesh to ash or stone in Godot 4</a>. Turn a mesh to ash, stone, acid or dust from the point it was hit. (CINELUX)</li>
+</ul>
+<p>The full list of packs, with free versions, is on <a href="../">the main page</a>.</p>
+<footer>
+<p><a href="https://gennai.itch.io/?utm_source=github_pages&amp;utm_medium=vfx">itch.io author page</a></p>
+</footer>
+</main>
+</body>
+</html>

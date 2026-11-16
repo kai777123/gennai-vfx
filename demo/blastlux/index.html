@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+		<title>Explosion VFX Demo</title>
+		<!--
+		Godot 4.7.2's default web shell plus a loading screen that moves (WS/shared/web_shell, used by
+		tools/vfxpack/web_export.sh when pack.json has web.shell = "preview").
+		From the first second the visitor watches a recorded loop of the effect (preview.mp4 next to
+		this page, poster preview.jpg) with one thin progress bar under it, instead of an empty frame.
+		The bar covers the download (to 70 %), the engine start, and then the demo's own warm-up of
+		what its first scene needs (window.fxLoad(done, total), demo UI v5). The demo calls
+		window.fxPreviewDone() once its first effect is on screen and the clip fades away. An older demo
+		UI calls window.fxNoteDone() when its start card is up, which does the same. If neither comes,
+		the clip goes 75 s after the engine started (the demo UI gives up holding at 60 s). Godot's own #status stays (tests wait for it to
+		be removed) but only its error notice is ever seen.
+		-->
+		<style>
+html, body, #canvas {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+body {
+	color: white;
+	background-color: black;
+	overflow: hidden;
+	touch-action: none;
+}
+
+#canvas {
+	display: block;
+}
+
+#canvas:focus {
+	outline: none;
+}
+
+#status, #status-splash, #status-progress {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
+
+#status, #status-splash {
+	top: 0;
+	bottom: 0;
+}
+
+#status {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	visibility: hidden;
+	z-index: 6;
+	pointer-events: none;
+}
+
+#status-splash, #status-progress {
+	display: none !important;
+}
+
+#status-notice {
+	display: none;
+	background-color: #5b3943;
+	border-radius: 0.5rem;
+	border: 1px solid #9b3943;
+	color: #e0e0e0;
+	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
+	line-height: 1.3;
+	margin: 0 2rem;
+	overflow: hidden;
+	padding: 1rem;
+	text-align: center;
+	pointer-events: auto;
+}
+
+#fx-preview {
+	position: absolute;
+	inset: 0;
+	z-index: 5;
+	background: #242424;
+	pointer-events: none;
+	transition: opacity 0.6s ease;
+}
+
+#fx-preview.gone {
+	opacity: 0;
+}
+
+#fx-preview video, #fx-preview .poster {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+#fx-band {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding: 28px 20px 14px;
+	background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.72));
+	font: 600 15px/1.3 system-ui, -apple-system, 'Segoe UI', sans-serif;
+	color: #eee;
+	text-shadow: 0 1px 3px #000;
+}
+
+#fx-line {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 7px;
+}
+
+#fx-pct {
+	color: #bbb;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+}
+
+#fx-track {
+	height: 3px;
+	border-radius: 2px;
+	background: rgba(255, 255, 255, 0.22);
+	overflow: hidden;
+}
+
+#fx-fill {
+	height: 100%;
+	width: 0;
+	background: rgba(255, 255, 255, 0.9);
+	transition: width 0.3s linear;
+}
+		</style>
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+
+	</head>
+	<body>
+		<canvas id="canvas">
+			Your browser does not support the canvas tag.
+		</canvas>
+
+		<noscript>
+			Your browser does not support JavaScript.
+		</noscript>
+
+		<div id="fx-preview">
+			<img class="poster" src="preview.jpg" alt="" onerror="this.remove()">
+			<video id="fx-video" src="preview.mp4" autoplay muted loop playsinline preload="auto" disablepictureinpicture onerror="this.remove()"></video>
+			<div id="fx-band">
+				<div id="fx-line"><span>Live demo loading&hellip;</span><span id="fx-pct">0%</span></div>
+				<div id="fx-track"><div id="fx-fill"></div></div>
+			</div>
+		</div>
+
+		<div id="status">
+			<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
+			<progress id="status-progress"></progress>
+			<div id="status-notice"></div>
+		</div>
+
+		<script>
+// The loading screen. Defined before the engine script, so it works however early the demo calls it.
+(function () {
+	const box = document.getElementById('fx-preview');
+	const fill = document.getElementById('fx-fill');
+	const pct = document.getElementById('fx-pct');
+	const video = document.getElementById('fx-video');
+	let shown = 0;
+	let done = false;
+	window.fxProgress = function (f) {
+		if (done) {
+			return;
+		}
+		f = Math.max(shown, Math.min(1, f));
+		shown = f;
+		fill.style.width = (f * 100).toFixed(1) + '%';
+		pct.textContent = Math.round(f * 100) + '%';
+	};
+	// The demo's warm-up of what its first scene needs: the last 25 % of the bar.
+	window.fxLoad = function (n, total) {
+		if (total > 0) {
+			window.fxProgress(0.75 + 0.25 * n / total);
+		}
+	};
+	window.fxPreviewDone = function () {
+		if (done) {
+			return;
+		}
+		window.fxProgress(1);
+		done = true;
+		box.classList.add('gone');
+		setTimeout(function () {
+			if (video) {
+				video.pause();
+			}
+			box.remove();
+		}, 700);
+	};
+	window.fxNoteDone = window.fxPreviewDone;
+	// Some browsers refuse autoplay until the page is touched; the poster stays then.
+	if (video && video.play) {
+		const p = video.play();
+		if (p && p.catch) {
+			p.catch(function () {});
+		}
+	}
+}());
+		</script>
+		<script src="../_engine/a/index.js"></script>
+		<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"../_engine/a/index","experimentalVK":false,"fileSizes":{"index.pck":871064,"../_engine/a/index.wasm":29226613},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"mainPack":"index.pck"};
+(function(){var q=new URLSearchParams(location.search),s=q.get('slot');if(s!==null&&/^\d+$/.test(s)){var a=['--','--slot='+s];if(q.get('hold'))a.push('--hold');GODOT_CONFIG.args=a;}})();
+const GODOT_THREADS_ENABLED = false;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const statusOverlay = document.getElementById('status');
+	const statusProgress = document.getElementById('status-progress');
+	const statusNotice = document.getElementById('status-notice');
+
+	let initializing = true;
+	let statusMode = '';
+
+	function setStatusMode(mode) {
+		if (statusMode === mode || !initializing) {
+			return;
+		}
+		if (mode === 'hidden') {
+			statusOverlay.remove();
+			initializing = false;
+			return;
+		}
+		statusOverlay.style.visibility = 'visible';
+		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
+		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+		statusMode = mode;
+	}
+
+	function setStatusNotice(text) {
+		while (statusNotice.lastChild) {
+			statusNotice.removeChild(statusNotice.lastChild);
+		}
+		const lines = text.split('\n');
+		lines.forEach((line) => {
+			statusNotice.appendChild(document.createTextNode(line));
+			statusNotice.appendChild(document.createElement('br'));
+		});
+	}
+
+	function displayFailureNotice(err) {
+		console.error(err);
+		if (err instanceof Error) {
+			setStatusNotice(err.message);
+		} else if (typeof err === 'string') {
+			setStatusNotice(err);
+		} else {
+			setStatusNotice('An unknown error occurred.');
+		}
+		setStatusMode('notice');
+		initializing = false;
+		window.fxPreviewDone();
+	}
+
+	const missing = Engine.getMissingFeatures({
+		threads: GODOT_THREADS_ENABLED,
+	});
+
+	if (missing.length !== 0) {
+		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
+			let serviceWorkerRegistrationPromise;
+			try {
+				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+			} catch (err) {
+				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+			}
+			// There's a chance that installing the service worker would fix the issue
+			Promise.race([
+				serviceWorkerRegistrationPromise.then((registration) => {
+					if (registration != null) {
+						return Promise.reject(new Error('Service worker already exists.'));
+					}
+					return registration;
+				}).then(() => engine.installServiceWorker()),
+				// For some reason, `getRegistration()` can stall
+				new Promise((resolve) => {
+					setTimeout(() => resolve(), 2000);
+				}),
+			]).then(() => {
+				// Reload if there was no error.
+				window.location.reload();
+			}).catch((err) => {
+				console.error('Error while registering service worker:', err);
+			});
+		} else {
+			// Display the message as usual
+			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
+			displayFailureNotice(missingMsg + missing.join('\n'));
+		}
+	} else {
+		setStatusMode('progress');
+		engine.startGame({
+			'onProgress': function (current, total) {
+				if (current > 0 && total > 0) {
+					statusProgress.value = current;
+					statusProgress.max = total;
+					window.fxProgress(0.7 * current / total);
+				} else {
+					statusProgress.removeAttribute('value');
+					statusProgress.removeAttribute('max');
+				}
+			},
+		}).then(() => {
+			setStatusMode('hidden');
+			window.fxProgress(0.75);
+			setTimeout(window.fxPreviewDone, GODOT_CONFIG.args.length ? 4000 : 75000);
+		}, displayFailureNotice);
+	}
+}());
+		</script>
+	</body>
+</html>
+

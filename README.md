@@ -1,6 +1,6 @@
 # Godot 4 VFX Packs by gennai
 
-I make VFX packs for Godot 4 and sell them on itch.io. 12 of them are made entirely in code, without textures. They're tested on Forward+, Mobile and Compatibility, which also covers Web exports. The other 4 are pixel-art sprite packs with a Godot project and a Unity package. Below is what each pack is for and where to get it.
+I make VFX packs for Godot 4 and sell them on itch.io. 13 of them are made entirely in code, without textures. They're tested on Forward+, Mobile and Compatibility, which also covers Web exports. The other 4 are pixel-art sprite packs with a Godot project and a Unity package. Below is what each pack is for and where to get it.
 
 ## Which pack do I need?
 
@@ -21,6 +21,7 @@ I make VFX packs for Godot 4 and sell them on itch.io. 12 of them are made entir
 | a curse that crawls over any mesh | [Dark Magic, Holy & Arcane VFX for Godot 4](https://gennai.itch.io/magic-spell-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) | 49 presets | [Free version](https://gennai.itch.io/free-magic-bolt-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |
 | wounds that stay on any mesh | [Blood & Hit VFX for Godot 4](https://gennai.itch.io/blood-hit-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) | 47 presets | [Free version](https://gennai.itch.io/free-hit-spark-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |
 | one blast node and everything in range reacts: crates scorch and break | [Explosion VFX for Godot 4](https://gennai.itch.io/explosion-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) | 112 presets | [Free version](https://gennai.itch.io/explosion-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |
+| gates | [Portal, Teleport & Spawn VFX for Godot 4](https://gennai.itch.io/portal-teleport-spawn-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) | 44 presets | [Free version](https://gennai.itch.io/portal-teleport-spawn-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |
 | turn any mesh to ash | [Death, Dissolve & Petrify VFX for Godot 4](https://gennai.itch.io/death-dissolve-petrify-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |  | [Free version](https://gennai.itch.io/death-dissolve-petrify-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) |
 
 ## The packs
@@ -115,6 +116,12 @@ One blast node and everything in range reacts: crates scorch and break, figures 
 95 3D and 17 2D presets, all made in code.  
 [Get the pack](https://gennai.itch.io/explosion-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) or [try the free version](https://gennai.itch.io/explosion-vfx-godot-4?utm_source=github_pages&utm_medium=catalog).
 
+### Portal, Teleport & Spawn VFX for Godot 4
+
+Gates, rifts and summoning circles that cut any mesh at their plane, rise, vanish and blink, 3D + 2D, 44 presets.  
+30 3D and 14 2D presets, all made in code.  
+[Get the pack](https://gennai.itch.io/portal-teleport-spawn-vfx-godot-4?utm_source=github_pages&utm_medium=catalog) or [try the free version](https://gennai.itch.io/portal-teleport-spawn-vfx-godot-4?utm_source=github_pages&utm_medium=catalog).
+
 ### Death, Dissolve & Petrify VFX for Godot 4
 
 Turn any mesh to ash, stone, acid or sand from the hit point, souls that leave the body, shatter bursts and death slashes, 3D + 2D, 45 presets.  
@@ -135,6 +142,17 @@ The free versions of thirteen packs are also on GitHub under the MIT license: ht
 [How to make a hit flash and blood effect in Godot 4](https://kai777123.github.io/gennai-vfx/hit-flash-godot-4.html). A white hit flash, a squash and a blood spray in 3D and 2D, the timing that sells the impact, and the pack.
 [How to make a sword trail and slash effect in Godot 4](https://kai777123.github.io/gennai-vfx/sword-trail-godot-4.html). A fading ribbon from the blade's base and tip in about 45 lines, smoothing, slashes and hits, and the pack.
 [Best Godot 4 VFX packs in 2026 (free and paid)](https://kai777123.github.io/gennai-vfx/best-godot-4-vfx-packs.html). 23 packs from 12 authors compared by use: price, 2D or 3D, Godot version, free versions and browser demos. Mine are in the list, said up front.
+
+## Try the effects in your browser
+
+One page per effect, with the code and a demo that runs in the page: [all effects](https://kai777123.github.io/gennai-vfx/vfx/).
+[Burn any mesh in Godot 4](https://kai777123.github.io/gennai-vfx/vfx/burn-any-mesh-godot-4.html). Set a crate, barrel or character on fire from the point it was hit.
+[Blow up anything in Godot 4](https://kai777123.github.io/gennai-vfx/vfx/blow-up-anything-godot-4.html). One call detonates a blast and every mesh in range reacts.
+[Strike lightning between any two points in Godot 4](https://kai777123.github.io/gennai-vfx/vfx/lightning-bolt-godot-4.html). Draw a branching bolt, a chain or a laser from code.
+[Freeze and shatter any mesh in Godot 4](https://kai777123.github.io/gennai-vfx/vfx/freeze-and-shatter-godot-4.html). Frost that spreads from the hit point, then thaws or breaks into shards.
+[Add rain, snow and storms to a Godot 4 scene](https://kai777123.github.io/gennai-vfx/vfx/rain-and-weather-godot-4.html). Rain that follows the camera, and weather you can blend from code.
+[Add sword trails and slashes to any weapon in Godot 4](https://kai777123.github.io/gennai-vfx/vfx/sword-trail-and-slash-godot-4.html). A trail that follows the blade, slash arcs and hit sparks.
+[Dissolve any mesh to ash or stone in Godot 4](https://kai777123.github.io/gennai-vfx/vfx/dissolve-to-ash-godot-4.html). Turn a mesh to ash, stone, acid or dust from the point it was hit.
 
 ## FAQ
 

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-439CSY86RJ"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-439CSY86RJ');</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strike lightning between any two points in Godot 4</title>
+<meta name="description" content="Draw a branching bolt, a chain or a laser from code. 4 lines of GDScript, a demo that runs in the page, and the ARCFLUX pack for Godot 4.4+.">
+<link rel="canonical" href="https://kai777123.github.io/gennai-vfx/vfx/lightning-bolt-godot-4.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Strike lightning between any two points in Godot 4">
+<meta property="og:description" content="Draw a branching bolt, a chain or a laser from code. 4 lines of GDScript, a demo that runs in the page, and the ARCFLUX pack for Godot 4.4+.">
+<meta property="og:url" content="https://kai777123.github.io/gennai-vfx/vfx/lightning-bolt-godot-4.html">
+<meta property="og:image" content="https://kai777123.github.io/gennai-vfx/img/arcflux_bolt.gif">
+<style>
+:root{--bg:#fff;--fg:#1c1c20;--muted:#5b5b66;--link:#0b5cd5;--line:#d9d9e0;--head:#f2f2f6;--code:#f5f5f8;--btn:#0b5cd5;--btnfg:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#16161a;--fg:#e8e8ee;--muted:#a0a0ad;--link:#7db2ff;--line:#34343c;--head:#22222a;--code:#1f1f26;--btn:#3d7fe0;--btnfg:#fff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:46rem;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.9rem;line-height:1.25;margin:0 0 .4em}
+h2{font-size:1.35rem;margin:2em 0 .5em}
+p{margin:.6em 0}
+a{color:var(--link)}
+img{max-width:100%;height:auto;display:block;border-radius:6px}
+figure{margin:1.2em 0}
+figcaption{color:var(--muted);font-size:.9rem;margin-top:.4em}
+pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px 14px;overflow-x:auto;font-size:.88rem;line-height:1.45}
+code{font-family:ui-monospace,Consolas,"SF Mono",monospace}
+p code{background:var(--code);padding:1px 4px;border-radius:3px;font-size:.9em}
+.t{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{background:var(--head)}
+.meta{color:var(--muted);font-size:.9rem;margin:0 0 1.5em}
+.demo{position:relative;width:100%;aspect-ratio:16/9;background:#101014;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.6rem;padding:12px;text-align:center}
+.demo iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.demo button{font:600 1.05rem system-ui,sans-serif;background:var(--btn);color:var(--btnfg);border:0;border-radius:8px;padding:.8rem 1.4rem;cursor:pointer}
+.demo button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.demo .note{color:#b8b8c4;font-size:.85rem;margin:0;max-width:30rem}
+.cta{border:1px solid var(--line);border-radius:8px;padding:14px 16px;background:var(--head);margin:1.2em 0}
+.cta p{margin:.3em 0}
+ul.list{padding-left:1.2rem}
+ul.list li{margin:.5em 0}
+footer{margin-top:2.5em;color:var(--muted);border-top:1px solid var(--line);padding-top:1em}
+</style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "TechArticle",
+ "headline": "Strike lightning between any two points in Godot 4",
+ "description": "Draw a branching bolt, a chain or a laser from code. 4 lines of GDScript, a demo that runs in the page, and the ARCFLUX pack for Godot 4.4+.",
+ "url": "https://kai777123.github.io/gennai-vfx/vfx/lightning-bolt-godot-4.html",
+ "image": "https://kai777123.github.io/gennai-vfx/img/arcflux_bolt.gif",
+ "datePublished": "2026-11-16",
+ "dateModified": "2026-11-16",
+ "author": {
+  "@type": "Person",
+  "name": "gennai",
+  "url": "https://gennai.itch.io/"
+ },
+ "dependencies": "Godot 4.4 or newer",
+ "mentions": {
+  "@type": "Product",
+  "name": "Lightning & Beam VFX for Godot 4 (ARCFLUX)",
+  "url": "https://gennai.itch.io/arcflux-lightning-beam-vfx",
+  "brand": {
+   "@type": "Brand",
+   "name": "gennai"
+  }
+ }
+}
+</script>
+</head>
+<body>
+<main>
+<p class="meta"><a href="../">Godot 4 VFX Packs by gennai</a> › <a href="./">Try the effects</a></p>
+<h1>Strike lightning between any two points in Godot 4</h1>
+<p class="meta">Updated 2026-11-16. Tested on Godot 4.4.1 and 4.7.2, Forward+ and Compatibility.</p>
+
+<p>Lightning in Godot 4 doesn&#x27;t need a texture or an animated sprite. With ARCFLUX you create an ArcfluxBolt3D, add it to the scene and call strike(from, to). A branching bolt appears between the two points, flashes and fades, and each strike gets a new shape. Lasers and other continuous effects take set_active() instead, which turns a held button into one line. The pack has 33 presets, 27 in 3D and 6 in 2D: bolts, sky strikes, chain lightning, arcs that stay attached to moving points, auras that crawl over a mesh, tesla coils, beams and an EMP ring, in six colour palettes. It&#x27;s all generated at runtime in code and needs Godot 4.4 or newer. The code is below, along with a demo that runs in the page.</p>
+
+<figure>
+<img src="../img/arcflux_bolt.gif" alt="A branching lightning bolt striking between two points in Godot 4 with a flash" width="960" height="540">
+<figcaption>Three bolt presets in blue, purple and gold. Every strike has a new shape.</figcaption>
+</figure>
+
+<h2>The code</h2>
+<pre><code>var bolt := ArcfluxBolt3D.new()
+add_child(bolt)
+bolt.strike($Hand.global_position, $Enemy.global_position)
+$Laser.set_active(Input.is_action_pressed(&quot;fire&quot;))     # a continuous beam
+</code></pre>
+<p>Glow in a WorldEnvironment makes bolts look better, but each effect draws its own soft halo and reads fine without it.</p>
+
+<h2>Try it in your browser</h2>
+<div class="demo" id="demo" data-src="../demo/arcflux/index.html">
+<button type="button" id="demo-go">Try it in your browser</button>
+<p class="note">It loads the pack's own demo, about 8 MB the first time, and it opens on its first scene, “Lightning Bolt”. Left and right arrow keys, or the on-screen buttons, move to other scenes. A desktop browser works best; the first start can take up to a minute while the shaders compile.</p>
+</div>
+<noscript><p><a href="../demo/arcflux/index.html">Open the demo in its own page</a>.</p></noscript>
+<script>
+(function(){var b=document.getElementById('demo-go'),d=document.getElementById('demo');
+b.addEventListener('click',function(){var f=document.createElement('iframe');f.src=d.getAttribute('data-src');
+f.title='ARCFLUX demo';f.allow='autoplay; fullscreen';f.setAttribute('allowfullscreen','');
+d.textContent='';d.appendChild(f);if(window.gtag)gtag('event','demo_start',{page:'lightning-bolt-godot-4'});});})();
+</script>
+
+<h2>What is in the pack</h2>
+<p>Scaling a node scales everything in it: the geometry, the glow, the sparks and the light.</p>
+<div class="t"><table>
+<tbody>
+<tr><th>Pack</th><td><a href="https://gennai.itch.io/arcflux-lightning-beam-vfx?utm_source=github_pages&amp;utm_medium=vfx&amp;utm_campaign=lightning-bolt-godot-4">Lightning &amp; Beam VFX for Godot 4 (ARCFLUX)</a></td></tr><tr><th>Presets</th><td>33 (27 3D, 6 2D)</td></tr><tr><th>Godot</th><td>4.4 or newer, tested on 4.4.1 and 4.7.2</td></tr><tr><th>Renderers</th><td>Forward+, Mobile, Compatibility (Web exports use Compatibility)</td></tr><tr><th>Textures</th><td>none: everything is made in code</td></tr></tbody>
+</table></div>
+
+<div class="cta">
+<p><a href="https://gennai.itch.io/arcflux-lightning-beam-vfx?utm_source=github_pages&amp;utm_medium=vfx&amp;utm_campaign=lightning-bolt-godot-4">Get Lightning &amp; Beam VFX for Godot 4 (ARCFLUX) on itch.io</a></p>
+<p>There's also a bundle of my Godot 4 packs: <a href="https://gennai.itch.io/godot-4-vfx-complete-collection?utm_source=github_pages&amp;utm_medium=vfx&amp;utm_campaign=lightning-bolt-godot-4">the complete collection</a>.</p>
+</div>
+
+<h2>More effects to try</h2>
+<ul class="list">
+<li><a href="burn-any-mesh-godot-4.html">Burn any mesh in Godot 4</a></li><li><a href="blow-up-anything-godot-4.html">Blow up anything in Godot 4</a></li><li><a href="freeze-and-shatter-godot-4.html">Freeze and shatter any mesh in Godot 4</a></li><li><a href="rain-and-weather-godot-4.html">Add rain, snow and storms to a Godot 4 scene</a></li><li><a href="sword-trail-and-slash-godot-4.html">Add sword trails and slashes to any weapon in Godot 4</a></li><li><a href="dissolve-to-ash-godot-4.html">Dissolve any mesh to ash or stone in Godot 4</a></li></ul>
+
+<footer>
+<p>All packs and guides: <a href="../">Godot 4 VFX Packs by gennai</a>. <a href="https://gennai.itch.io/?utm_source=github_pages&amp;utm_medium=vfx">itch.io author page</a></p>
+</footer>
+</main>
+</body>
+</html>
