@@ -1,2 +1,6 @@
 _dev/
 __pycache__/
+
+# unreleased pack (NOXALUX): keep local until the itch page is live
+vfx/status-effects-godot-4.html
+demo/noxalux/
